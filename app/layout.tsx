@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SessionProvider } from "@/components/shared/SessionProvider";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Snippets CMS",
@@ -16,6 +17,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <SessionProvider>{children}</SessionProvider>
+        <Toaster />
       </body>
     </html>
   );
