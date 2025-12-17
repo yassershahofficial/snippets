@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { PostList } from "@/components/admin/PostList";
 import { DeletePostDialog } from "@/components/admin/DeletePostDialog";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,6 @@ import Link from "next/link";
 import { toast } from "sonner";
 
 export default function PostsPage() {
-  const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<{
     slug: string;
@@ -22,7 +20,7 @@ export default function PostsPage() {
   const [skip, setSkip] = useState(0);
   const limit = 10;
 
-  const { posts, loading, pagination, refetch, removePost, setSkip: setSkipState } = usePosts({
+  const { posts, loading, pagination, removePost, setSkip: setSkipState } = usePosts({
     limit,
     skip,
     autoFetch: true,
@@ -43,7 +41,7 @@ export default function PostsPage() {
       toast.success("Post deleted successfully");
       setDeleteDialogOpen(false);
       setPostToDelete(null);
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete post");
     } finally {
       setIsDeleting(false);

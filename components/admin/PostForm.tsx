@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TipTapEditor } from "./TipTapEditor";
 import { PostInput, TipTapContent } from "@/types/post";
-import { generateSlug } from "@/utils/validation";
+import { generateSlug } from "@/utils/slug";
 import { motion } from "framer-motion";
 import { useState } from "react";
 
@@ -134,7 +134,7 @@ export function PostForm({
   const onFormSubmit = async (data: PostFormData) => {
     try {
       await onSubmit(data as PostInput);
-    } catch (error) {
+    } catch {
       // Error handling is done in the hook
     }
   };

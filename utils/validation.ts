@@ -1,5 +1,6 @@
 import { PostInput, TipTapContent } from "@/types/post";
 import Post from "@/models/Post";
+import { generateSlug, validateSlugFormat } from "@/utils/slug";
 
 export interface ValidationError {
   field: string;
@@ -9,13 +10,6 @@ export interface ValidationError {
 export interface ValidationResult {
   isValid: boolean;
   errors: ValidationError[];
-}
-
-// Slug format validation
-const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
-export function validateSlugFormat(slug: string): boolean {
-  return SLUG_REGEX.test(slug) && slug.length > 0 && slug.length <= 100;
 }
 
 // Check if slug is unique (excluding current post)
@@ -29,17 +23,6 @@ export async function isSlugUnique(
   }
   const existing = await Post.findOne(query);
   return !existing;
-}
-
-// Generate slug from title
-export function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "") // Remove special characters
-    .replace(/\s+/g, "-") // Replace spaces with hyphens
-    .replace(/-+/g, "-") // Replace multiple hyphens with single
-    .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
 }
 
 // Validate TipTap content structure

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { StatsCards } from "@/components/admin/StatsCards";
 import { PostList } from "@/components/admin/PostList";
 import { Button } from "@/components/ui/button";
@@ -12,8 +11,7 @@ import { Plus, FileText } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminDashboard() {
-  const router = useRouter();
-  const { posts, loading, pagination, refetch } = usePosts({ limit: 5 });
+  const { posts, loading, pagination } = usePosts({ limit: 5 });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -73,10 +71,7 @@ export default function AdminDashboard() {
           <CardContent>
             <PostList
               posts={recentPosts}
-              onDelete={async (slug) => {
-                // This will be handled by the posts page
-                router.push("/admin/posts");
-              }}
+              onDelete={() => {}}
               isLoading={loading}
             />
           </CardContent>

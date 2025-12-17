@@ -32,7 +32,7 @@ export default function EditPostPage() {
         setLoading(true);
         const data = await getPost(slug);
         setPost(data as PostWithId);
-      } catch (err) {
+      } catch {
         setError("Failed to load post");
         toast.error("Failed to load post");
       } finally {
@@ -48,7 +48,7 @@ export default function EditPostPage() {
   const handleSubmit = async (data: PostInput) => {
     try {
       await submit(data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to update post");
     }
   };

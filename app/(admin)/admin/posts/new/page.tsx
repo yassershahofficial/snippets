@@ -19,7 +19,7 @@ export default function NewPostPage() {
   const handleSubmit = async (data: PostInput) => {
     try {
       await submit(data);
-    } catch (err) {
+    } catch {
       toast.error(error || "Failed to create post");
     }
   };
