@@ -35,19 +35,34 @@ function SidebarContent({
   userEmail,
   onNavigate,
   onSignOut,
+  onToggleMobileMenu,
+  showMobileClose,
 }: {
   pathname: string;
   userName?: string | null;
   userEmail?: string | null;
   onNavigate?: () => void;
   onSignOut: () => void;
+  onToggleMobileMenu?: () => void;
+  showMobileClose?: boolean;
 }) {
   return (
     <>
       {/* Logo/Brand */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Snippets CMS</h1>
-        <p className="text-sm text-muted-foreground">Admin Dashboard</p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Snippets</h1>
+          <p className="text-sm text-muted-foreground">Admin Dashboard</p>
+        </div>
+
+        {/* Mobile close button (inside navbar) */}
+        {showMobileClose && (
+          <div className="lg:hidden">
+            <Button variant="outline" size="icon" onClick={onToggleMobileMenu}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
@@ -120,19 +135,17 @@ export function AdminNav() {
   return (
     <>
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? (
-            <X className="h-5 w-5" />
-          ) : (
+      {!mobileMenuOpen && (
+        <div className="lg:hidden fixed top-4 left-4 z-50">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setMobileMenuOpen(true)}
+          >
             <Menu className="h-5 w-5" />
-          )}
-        </Button>
-      </div>
+          </Button>
+        </div>
+      )}
 
       {/* Sidebar (always visible on desktop, animated on mobile) */}
       <motion.aside
@@ -149,6 +162,8 @@ export function AdminNav() {
           userEmail={user?.email}
           onNavigate={!isDesktop ? () => setMobileMenuOpen(false) : undefined}
           onSignOut={handleSignOut}
+          onToggleMobileMenu={!isDesktop ? () => setMobileMenuOpen(false) : undefined}
+          showMobileClose={!isDesktop && mobileMenuOpen}
         />
       </motion.aside>
 

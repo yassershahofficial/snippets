@@ -11,7 +11,7 @@ import { TipTapEditor } from "./TipTapEditor";
 import { PostInput, TipTapContent } from "@/types/post";
 import { generateSlug } from "@/utils/slug";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Zod schema for post validation
 const postSchema = z.object({
@@ -89,8 +89,10 @@ export function PostForm({
   const content = watch("content");
   const tags = watch("tags") || [];
 
-  // Handle server-side field errors
-  if (Object.keys(fieldErrors).length > 0) {
+  // Handle server-side field errors (only when they change)
+  useEffect(() => {
+    if (!fieldErrors || Object.keys(fieldErrors).length === 0) return;
+
     Object.entries(fieldErrors).forEach(([field, messages]) => {
       if (messages && messages.length > 0) {
         setError(field as keyof PostFormData, {
@@ -99,7 +101,7 @@ export function PostForm({
         });
       }
     });
-  }
+  }, [fieldErrors, setError]);
 
   const handleContentChange = (newContent: TipTapContent | TipTapContent[]) => {
     setValue("content", newContent, { shouldValidate: true });

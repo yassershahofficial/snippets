@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 
 export default function NewPostPage() {
   const router = useRouter();
-  const { submit, loading, error, fieldErrors } = usePostForm({
+  const { submit, loading, fieldErrors } = usePostForm({
     onSuccess: () => {
       toast.success("Post created successfully!");
       router.push("/admin/posts");
@@ -19,8 +19,14 @@ export default function NewPostPage() {
   const handleSubmit = async (data: PostInput) => {
     try {
       await submit(data);
-    } catch {
-      toast.error(error || "Failed to create post");
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "string"
+            ? err
+            : null;
+      toast.error(message || "Failed to create post");
     }
   };
 

@@ -32,7 +32,7 @@ export default function AdminDashboard() {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
-        <div>
+        <div className="pl-14 lg:pl-0">
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground mt-1">
             Welcome to your admin dashboard

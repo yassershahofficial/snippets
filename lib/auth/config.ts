@@ -26,6 +26,13 @@ function isEmailAllowed(email: string): boolean {
   return false;
 }
 
+function getEmailVerifiedFromProfile(profile: unknown): boolean | undefined {
+  if (!profile || typeof profile !== "object") return undefined;
+  // NextAuth's Google profile typically includes `email_verified`, but keep it defensive.
+  const maybe = profile as Record<string, unknown>;
+  return typeof maybe.email_verified === "boolean" ? maybe.email_verified : undefined;
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -44,10 +51,8 @@ export const authOptions: NextAuthOptions = {
           .trim()
           .toLowerCase() !== "false";
 
-        const emailVerified =
-          typeof (profile as any)?.email_verified === "boolean"
-            ? Boolean((profile as any).email_verified)
-            : true;
+        const emailVerifiedFromProfile = getEmailVerifiedFromProfile(profile);
+        const emailVerified = emailVerifiedFromProfile ?? true;
 
         if (requireVerified && !emailVerified) return false;
         if (!isEmailAllowed(user.email)) return false;
