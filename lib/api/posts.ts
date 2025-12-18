@@ -75,6 +75,26 @@ export async function getPost(slug: string): Promise<SinglePostResponse> {
 }
 
 /**
+ * Fetch the featured post
+ */
+export async function getFeaturedPost(): Promise<SinglePostResponse | null> {
+  try {
+    const response = await api.get<ApiResponse<SinglePostResponse>>(
+      `/api/posts/featured`
+    );
+    if (response.error) {
+      return null;
+    }
+    if (!response.data) {
+      return null;
+    }
+    return response.data;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
  * Create a new post
  */
 export async function createPost(

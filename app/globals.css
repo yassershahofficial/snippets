@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -24,6 +26,17 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
+    
+    /* Editorial Color Scheme */
+    --jet-black: 0 0% 6.7%; /* #111111 */
+    --ink-black: 0 0% 0%; /* #000000 */
+    --editorial-gray: 0 0% 33.3%; /* #555555 */
+    --paper-gray: 210 20% 98%; /* #f9fafb */
+    --electric-blue: 217 91% 60%; /* #2563eb */
+    --alert-red: 0 72% 51%; /* #dc2626 */
+    --deep-navy: 217 91% 60%; /* #1d4ed8 */
+    --forest-green: 142 76% 36%; /* #15803d */
+    --royal-purple: 271 81% 56%; /* #7e22ce */
   }
 
   .dark {
@@ -55,6 +68,12 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+    font-size: 120%;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
   }
 }
 

@@ -47,6 +47,20 @@ const config: Config = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        // Editorial colors
+        "jet-black": "hsl(var(--jet-black))",
+        "ink-black": "hsl(var(--ink-black))",
+        "editorial-gray": "hsl(var(--editorial-gray))",
+        "paper-gray": "hsl(var(--paper-gray))",
+        "electric-blue": "hsl(var(--electric-blue))",
+        "alert-red": "hsl(var(--alert-red))",
+        "deep-navy": "hsl(var(--deep-navy))",
+        "forest-green": "hsl(var(--forest-green))",
+        "royal-purple": "hsl(var(--royal-purple))",
+      },
+      fontFamily: {
+        serif: ['Playfair Display', 'serif'],
+        sans: ['Inter', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
