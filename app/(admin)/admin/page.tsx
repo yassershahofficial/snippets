@@ -11,7 +11,7 @@ import { Plus, FileText } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminDashboard() {
-  const { posts, loading, pagination } = usePosts({ limit: 5 });
+  const { posts, loading, pagination, refetch } = usePosts({ limit: 5 });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -73,6 +73,7 @@ export default function AdminDashboard() {
               posts={recentPosts}
               onDelete={() => {}}
               isLoading={loading}
+              onFeaturedToggle={refetch}
             />
           </CardContent>
         </Card>

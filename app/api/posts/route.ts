@@ -59,6 +59,8 @@ export async function POST(request: NextRequest) {
       content: processedContent,
       description: body.description,
       tags: body.tags || [],
+      featured: body.featured || false,
+      image_url: body.image_url && body.image_url.trim() !== "" ? body.image_url.trim() : undefined,
     });
 
     return NextResponse.json(
@@ -70,6 +72,8 @@ export async function POST(request: NextRequest) {
           content: post.content,
           description: post.description,
           tags: post.tags,
+          featured: post.featured,
+          image_url: post.image_url,
           createdAt: post.createdAt,
           updatedAt: post.updatedAt,
         },
@@ -146,6 +150,8 @@ export async function GET(request: NextRequest) {
           content: post.content,
           description: post.description,
           tags: post.tags,
+          featured: post.featured || false,
+          image_url: post.image_url,
           createdAt: post.createdAt,
           updatedAt: post.updatedAt,
         })),

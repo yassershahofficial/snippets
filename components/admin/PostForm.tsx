@@ -31,6 +31,11 @@ const postSchema = z.object({
     .string()
     .max(500, "Description cannot exceed 500 characters")
     .optional(),
+  image_url: z
+    .string()
+    .url("Image URL must be a valid URL")
+    .optional()
+    .or(z.literal("")),
   tags: z
     .array(z.string().min(1, "Tags cannot be empty"))
     .max(10, "Cannot have more than 10 tags")
@@ -81,6 +86,7 @@ export function PostForm({
       title: initialData?.title || "",
       slug: initialData?.slug || "",
       description: initialData?.description || "",
+      image_url: initialData?.image_url || "",
       tags: initialData?.tags || [],
       content: initialData?.content || { type: "doc", content: [] },
     },
@@ -203,6 +209,30 @@ export function PostForm({
             {errors.description.message}
           </p>
         )}
+      </motion.div>
+
+      {/* Image URL */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, delay: 0.12 }}
+      >
+        <Label htmlFor="image_url">Image URL</Label>
+        <Input
+          id="image_url"
+          type="url"
+          {...register("image_url")}
+          className="mt-1"
+          placeholder="https://example.com/image.jpg"
+        />
+        {errors.image_url && (
+          <p className="text-sm text-destructive mt-1">
+            {errors.image_url.message}
+          </p>
+        )}
+        <p className="text-sm text-muted-foreground mt-1">
+          Enter a valid image URL (http:// or https://)
+        </p>
       </motion.div>
 
       {/* Tags */}

@@ -19,6 +19,8 @@ interface SinglePostResponse {
   content: TipTapContent | TipTapContent[];
   description?: string;
   tags: string[];
+  featured?: boolean;
+  image_url?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -128,6 +130,31 @@ export async function deletePost(slug: string): Promise<void> {
     if (response.error) {
       throw new Error(response.error);
     }
+  } catch (error) {
+    throw handleApiError(error);
+  }
+}
+
+/**
+ * Toggle featured status of a post
+ * When setting a post as featured, all other posts are automatically unfeatured
+ */
+export async function toggleFeatured(
+  slug: string,
+  featured: boolean
+): Promise<SinglePostResponse> {
+  try {
+    const response = await api.put<ApiResponse<SinglePostResponse>>(
+      `/api/posts/${slug}`,
+      { featured }
+    );
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    if (!response.data) {
+      throw new Error("No data returned");
+    }
+    return response.data;
   } catch (error) {
     throw handleApiError(error);
   }

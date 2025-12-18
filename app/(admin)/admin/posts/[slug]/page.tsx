@@ -99,6 +99,7 @@ export default function EditPostPage() {
             description: post.description,
             tags: post.tags,
             content: post.content,
+            image_url: post.image_url,
           }}
           onSubmit={handleSubmit}
           isLoading={isSubmitting}

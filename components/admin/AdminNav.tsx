@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   X,
+  Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
@@ -27,6 +28,7 @@ const navItems: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/posts", label: "Posts", icon: FileText },
   { href: "/admin/posts/new", label: "New Post", icon: Plus },
+  { href: "/admin/tags", label: "Featured Tags", icon: Tag },
 ];
 
 function SidebarContent({

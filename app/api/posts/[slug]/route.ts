@@ -11,12 +11,13 @@ import { PostInput } from "@/types/post";
 // GET /api/posts/[slug] - Get single post by slug
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     await connectDB();
 
-    const post = await Post.findOne({ slug: params.slug }).lean();
+    const { slug } = await params;
+    const post = await Post.findOne({ slug }).lean();
 
     if (!post) {
       return NextResponse.json(
@@ -33,6 +34,8 @@ export async function GET(
         content: post.content,
         description: post.description,
         tags: post.tags,
+        featured: post.featured || false,
+        image_url: post.image_url,
         createdAt: post.createdAt,
         updatedAt: post.updatedAt,
       })
@@ -49,7 +52,7 @@ export async function GET(
 // PUT /api/posts/[slug] - Update post
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     // Check authentication
@@ -63,8 +66,9 @@ export async function PUT(
 
     await connectDB();
 
+    const { slug } = await params;
     // Find existing post
-    const existingPost = await Post.findOne({ slug: params.slug });
+    const existingPost = await Post.findOne({ slug });
     if (!existingPost) {
       return NextResponse.json(
         createApiResponse(null, "Post not found"),
@@ -108,6 +112,14 @@ export async function PUT(
       processedContent = processTipTapContent(body.content);
     }
 
+    // If setting as featured, unfeature all other posts first
+    if (body.featured === true) {
+      await Post.updateMany(
+        { _id: { $ne: existingPost._id }, featured: true },
+        { $set: { featured: false } }
+      );
+    }
+
     // Update post
     const updatedPost = await Post.findByIdAndUpdate(
       existingPost._id,
@@ -117,6 +129,10 @@ export async function PUT(
         ...(body.content && { content: processedContent }),
         ...(body.description !== undefined && { description: body.description }),
         ...(body.tags !== undefined && { tags: body.tags }),
+        ...(body.featured !== undefined && { featured: body.featured }),
+        ...(body.image_url !== undefined && {
+          image_url: body.image_url && body.image_url.trim() !== "" ? body.image_url.trim() : undefined,
+        }),
       },
       { new: true, runValidators: true }
     );
@@ -130,6 +146,8 @@ export async function PUT(
           content: updatedPost.content,
           description: updatedPost.description,
           tags: updatedPost.tags,
+          featured: updatedPost.featured,
+          image_url: updatedPost.image_url,
           createdAt: updatedPost.createdAt,
           updatedAt: updatedPost.updatedAt,
         },
@@ -170,7 +188,7 @@ export async function PUT(
 // DELETE /api/posts/[slug] - Delete post
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     // Check authentication
@@ -184,8 +202,9 @@ export async function DELETE(
 
     await connectDB();
 
+    const { slug } = await params;
     // Find and delete post
-    const post = await Post.findOneAndDelete({ slug: params.slug });
+    const post = await Post.findOneAndDelete({ slug });
 
     if (!post) {
       return NextResponse.json(

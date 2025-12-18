@@ -20,7 +20,7 @@ export default function PostsPage() {
   const [skip, setSkip] = useState(0);
   const limit = 10;
 
-  const { posts, loading, pagination, removePost, setSkip: setSkipState } = usePosts({
+  const { posts, loading, pagination, removePost, setSkip: setSkipState, refetch } = usePosts({
     limit,
     skip,
     autoFetch: true,
@@ -85,6 +85,7 @@ export default function PostsPage() {
           posts={posts}
           onDelete={handleDeleteClick}
           isLoading={loading}
+          onFeaturedToggle={refetch}
         />
       </motion.div>
 

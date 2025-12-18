@@ -19,6 +19,8 @@ export interface IPost {
   content: TipTapContent | TipTapContent[];
   description?: string;
   tags: string[];
+  featured?: boolean;
+  image_url?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -37,11 +39,14 @@ export interface PostInput {
   content: TipTapContent | TipTapContent[];
   description?: string;
   tags?: string[];
+  featured?: boolean;
+  image_url?: string;
 }
 
 // Post with ID (for API responses)
 export interface PostWithId extends IPost {
   _id: string;
+  featured?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

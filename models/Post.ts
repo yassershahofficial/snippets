@@ -35,6 +35,29 @@ const PostSchema = new Schema<IPost>(
         message: "Cannot have more than 10 tags",
       },
     },
+    featured: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    image_url: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: function (v: string | undefined) {
+          if (!v) return true; // Optional field
+          // Validate URL format
+          try {
+            const url = new URL(v);
+            // Check if it's http or https
+            return url.protocol === "http:" || url.protocol === "https:";
+          } catch {
+            return false;
+          }
+        },
+        message: "Image URL must be a valid HTTP or HTTPS URL",
+      },
+    },
   },
   {
     timestamps: true,
