@@ -28,8 +28,11 @@ RUN pnpm build
 FROM base AS runner
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS=--no-deprecation
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+# Avoid pnpm interactive prompts if anything still invokes it
+ENV CI=true
 
 RUN addgroup -S nodejs && adduser -S nextjs -G nodejs \
   && mkdir -p /app/media \
@@ -47,4 +50,5 @@ COPY --from=builder --chown=nextjs:nodejs /app/src ./src
 
 USER nextjs
 EXPOSE 3000
-CMD ["pnpm", "start"]
+# Run Next directly — `pnpm start` triggers corepack/pnpm install in non-TTY containers
+CMD ["node", "node_modules/next/dist/bin/next", "start", "--hostname", "0.0.0.0", "--port", "3000"]
