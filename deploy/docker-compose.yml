@@ -1,0 +1,91 @@
+# Production stack — pull prebuilt images from GHCR (no app source on the VPS).
+# Copy this whole `deploy/` folder to the server, fill `.env`, then:
+#   docker compose pull && docker compose up -d
+# Optional Caddy (dedicated / new VPS claiming :80/:443):
+#   docker compose --profile caddy up -d
+
+name: snippets
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: snippets_mongo
+    restart: unless-stopped
+    volumes:
+      - snippets_mongo_data:/data/db
+    networks:
+      - snippets_net
+    # Internal only — never publish Mongo
+
+  cms:
+    image: ${CMS_IMAGE}
+    container_name: snippets_cms
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: mongodb://mongo:27017/snippets
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET}
+      PAYLOAD_PUBLIC_SERVER_URL: ${PAYLOAD_PUBLIC_SERVER_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      CSRF_ORIGINS: ${CSRF_ORIGINS}
+    volumes:
+      - snippets_media:/app/media
+    ports:
+      # Bind to loopback so only local Caddy (or SSH tunnel) can reach admin/API
+      - "127.0.0.1:${CMS_HOST_PORT:-3000}:3000"
+    networks:
+      - snippets_net
+
+  web:
+    image: ${WEB_IMAGE}
+    container_name: snippets_web
+    restart: unless-stopped
+    depends_on:
+      - cms
+    env_file:
+      - .env
+    environment:
+      PAYLOAD_URL: http://cms:3000
+      HOST: 0.0.0.0
+      PORT: 4321
+    ports:
+      - "127.0.0.1:${WEB_HOST_PORT:-4321}:4321"
+    networks:
+      - snippets_net
+
+  caddy:
+    profiles: ["caddy"]
+    image: caddy:2-alpine
+    container_name: snippets_caddy
+    restart: unless-stopped
+    depends_on:
+      - web
+      - cms
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - snippets_caddy_data:/data
+      - snippets_caddy_config:/config
+    networks:
+      - snippets_net
+
+networks:
+  snippets_net:
+    name: snippets_net
+    driver: bridge
+
+volumes:
+  snippets_mongo_data:
+    name: snippets_mongo_data
+  snippets_media:
+    name: snippets_media
+  snippets_caddy_data:
+    name: snippets_caddy_data
+  snippets_caddy_config:
+    name: snippets_caddy_config

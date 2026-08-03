@@ -1,0 +1,19 @@
+# Astro web — local/dev Dockerfile
+FROM node:22-alpine
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@10.15.0 --activate
+
+COPY package.json ./
+RUN printf '%s\n' 'node-linker=hoisted' > .npmrc \
+  && printf '%s\n' 'onlyBuiltDependencies:' "  - '@tailwindcss/oxide'" '  - esbuild' > pnpm-workspace.yaml \
+  && pnpm install --no-frozen-lockfile
+
+COPY . .
+
+ENV NODE_ENV=development
+ENV HOST=0.0.0.0
+ENV PORT=4321
+EXPOSE 4321
+CMD ["pnpm", "dev"]

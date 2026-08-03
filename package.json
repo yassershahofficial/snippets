@@ -1,0 +1,16 @@
+{
+  "name": "snippets",
+  "private": true,
+  "packageManager": "pnpm@10.15.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @snippets/cms --filter @snippets/web dev",
+    "dev:cms": "pnpm --filter @snippets/cms dev",
+    "dev:web": "pnpm --filter @snippets/web dev",
+    "build": "pnpm --filter @snippets/cms build && pnpm --filter @snippets/web build",
+    "build:cms": "pnpm --filter @snippets/cms build",
+    "build:web": "pnpm --filter @snippets/web build"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

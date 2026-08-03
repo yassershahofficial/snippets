@@ -1,0 +1,70 @@
+name: snippets
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: snippets_mongo
+    restart: unless-stopped
+    volumes:
+      - snippets_mongo_data:/data/db
+    networks:
+      - snippets_net
+    # Internal only — no host port published
+
+  cms:
+    build:
+      context: ./apps/cms
+      dockerfile: Dockerfile.dev
+    container_name: snippets_cms
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: mongodb://mongo:27017/snippets
+      PAYLOAD_PUBLIC_SERVER_URL: http://localhost:3000
+      CORS_ORIGINS: http://localhost:4321,http://127.0.0.1:4321
+      CSRF_ORIGINS: http://localhost:4321,http://127.0.0.1:4321
+    ports:
+      - "3000:3000"
+    volumes:
+      - snippets_media:/app/media
+      - ./apps/cms/src:/app/src
+      - ./apps/cms/public:/app/public
+    networks:
+      - snippets_net
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile.dev
+    container_name: snippets_web
+    restart: unless-stopped
+    depends_on:
+      - cms
+    env_file:
+      - .env
+    environment:
+      PAYLOAD_URL: http://cms:3000
+      PUBLIC_PAYLOAD_URL: http://localhost:3000
+      PUBLIC_SITE_URL: http://localhost:4321
+    ports:
+      - "4321:4321"
+    volumes:
+      - ./apps/web/src:/app/src
+      - ./apps/web/public:/app/public
+      - ./apps/web/astro.config.mjs:/app/astro.config.mjs
+    networks:
+      - snippets_net
+
+networks:
+  snippets_net:
+    name: snippets_net
+    driver: bridge
+
+volumes:
+  snippets_mongo_data:
+    name: snippets_mongo_data
+  snippets_media:
+    name: snippets_media

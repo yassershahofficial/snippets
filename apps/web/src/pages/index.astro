@@ -1,0 +1,98 @@
+---
+export const prerender = false
+
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { excerptText, lexicalToPlainText } from '../lib/lexical'
+import { getPublishedPosts, type Author, type Post } from '../lib/payload'
+
+let posts: Post[] = []
+let error: string | null = null
+
+try {
+  posts = await getPublishedPosts()
+} catch (err) {
+  error = err instanceof Error ? err.message : 'Failed to load posts'
+}
+
+function formatDate(iso?: string | null): string {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function authorNames(post: Post): string {
+  if (!post.authors?.length) return ''
+  return post.authors
+    .map((author) => (typeof author === 'string' ? author : (author as Author).name))
+    .join(', ')
+}
+
+function metaLine(post: Post): string {
+  const parts: string[] = []
+  const date = formatDate(post.publishedAt)
+  if (date) parts.push(date)
+  if (post.readingTime) parts.push(`${post.readingTime} min read`)
+  const authors = authorNames(post)
+  if (authors) parts.push(authors)
+  if (post.layout && post.layout !== 'essay') parts.push(post.layout)
+  return parts.join(' · ')
+}
+
+function cardHook(post: Post): string {
+  const fromSeo = post.seo?.metaDescription?.trim()
+  if (fromSeo) return excerptText(fromSeo, 160)
+  return excerptText(lexicalToPlainText(post.body), 160)
+}
+---
+
+<BaseLayout title="SNIPPETS" width="home">
+  <section class="mb-12">
+    <p class="max-w-md font-bold leading-relaxed text-[var(--page-accent)]">
+      Skip the syntax
+    </p>
+    <h1 class="mt-2 text-5xl font-bold tracking-tight text-[var(--page-fg)] md:text-7xl">
+      SNIPPETS
+    </h1>
+    <p class="mt-4 max-w-md text-[var(--page-muted)] leading-relaxed">
+      Buying a new computer is always cheaper than trying to exit Vim.
+    </p>
+  </section>
+
+  {
+    error ? (
+      <p class="border border-[var(--page-border)] bg-[var(--page-code-bg)] px-4 py-3 text-sm text-[var(--page-fg)]">
+        Could not reach Payload ({error}). Start the CMS and Mongo, then refresh.
+      </p>
+    ) : posts.length === 0 ? (
+      <p class="text-[var(--page-muted)]">
+        No published posts yet. Create an author, tag, and essay post in the admin, then publish.
+      </p>
+    ) : (
+      <ul class="grid gap-4 sm:grid-cols-2">
+        {posts.map((post) => {
+          const hook = cardHook(post)
+          return (
+            <li>
+              <a
+                href={`/posts/${post.slug}`}
+                class="flex h-full flex-col border border-[var(--page-border)] bg-[var(--page-bg)] p-5 text-[var(--page-fg)] no-underline transition-colors hover:border-[var(--page-accent)]"
+              >
+                <h2 class="text-xl font-semibold tracking-tight text-balance">{post.title}</h2>
+                {metaLine(post) && (
+                  <p class="mt-2 text-xs text-[var(--page-muted)]">{metaLine(post)}</p>
+                )}
+                {hook && (
+                  <p class="mt-4 flex-1 text-sm leading-relaxed text-[var(--page-muted)]">{hook}</p>
+                )}
+                <span class="mt-5 text-sm font-semibold text-[var(--page-accent)]">Read more</span>
+              </a>
+            </li>
+          )
+        })}
+      </ul>
+    )
+  }
+</BaseLayout>

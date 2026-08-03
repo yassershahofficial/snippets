@@ -1,0 +1,77 @@
+---
+import '../styles/global.css'
+import ThemeToggle from '../components/ThemeToggle.astro'
+
+interface Props {
+  title: string
+  description?: string
+  /** Constrain main content; home is slightly wider than essay reading. */
+  width?: 'home' | 'reading'
+  ogImageUrl?: string
+  ogImageAlt?: string
+  canonical?: string
+  noIndex?: boolean
+}
+
+const {
+  title,
+  description = 'SNIPPETS — field notes, layouts, and code references',
+  width = 'home',
+  ogImageUrl,
+  ogImageAlt,
+  canonical,
+  noIndex = false,
+} = Astro.props
+
+const mainMax = width === 'reading' ? 'max-w-[65ch]' : 'max-w-3xl'
+const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'http://localhost:4321').replace(/\/$/, '')
+const canonicalUrl = canonical || new URL(Astro.url.pathname, `${siteUrl}/`).href
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    {noIndex && <meta name="robots" content="noindex,nofollow" />}
+    <link rel="canonical" href={canonicalUrl} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
+    {ogImageUrl && ogImageAlt && <meta property="og:image:alt" content={ogImageAlt} />}
+    <title>{title}</title>
+    <script is:inline>
+      ;(function () {
+        try {
+          if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark')
+          }
+        } catch (_) {}
+      })()
+    </script>
+  </head>
+  <body class="min-h-screen antialiased">
+    <header class="border-b border-[var(--page-border)]">
+      <div class={`mx-auto flex ${mainMax} items-center justify-between gap-4 px-4 py-4`}>
+        <a
+          href="/"
+          class="text-lg font-semibold tracking-tight text-[var(--page-fg)] no-underline hover:text-[var(--page-accent)]"
+        >
+          SNIPPETS
+        </a>
+        <div class="flex items-center gap-5">
+          <nav class="flex gap-4 text-sm text-[var(--page-muted)]">
+            <a href="/" class="no-underline hover:text-[var(--page-fg)]">Posts</a>
+          </nav>
+          <ThemeToggle />
+        </div>
+      </div>
+    </header>
+    <main class={`mx-auto ${mainMax} px-4 py-10`}>
+      <slot />
+    </main>
+  </body>
+</html>

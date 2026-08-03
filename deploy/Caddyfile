@@ -1,0 +1,13 @@
+# Used when running: docker compose --profile caddy up -d
+# Edit hostnames to match DNS / .env (SITE_HOST / CMS_HOST).
+# Caddy reaches containers by Compose service name on snippets_net.
+
+snippets.example.com {
+	encode gzip
+	reverse_proxy web:4321
+}
+
+cms.snippets.example.com {
+	encode gzip
+	reverse_proxy cms:3000
+}

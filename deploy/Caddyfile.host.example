@@ -1,0 +1,13 @@
+# Host-level Caddy snippet for an existing VPS (Caddy already installed).
+# Paste into your main Caddyfile (or import), then reload Caddy.
+# Requires deploy/docker-compose.yml binding web/cms to 127.0.0.1.
+
+snippets.example.com {
+	encode gzip
+	reverse_proxy 127.0.0.1:4321
+}
+
+cms.snippets.example.com {
+	encode gzip
+	reverse_proxy 127.0.0.1:3000
+}

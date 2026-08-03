@@ -1,0 +1,16 @@
+node_modules
+.pnpm-store
+dist
+.next
+.astro
+.vercel
+.turbo
+.env
+.env.local
+*.log
+.DS_Store
+apps/cms/media
+apps/cms/src/app/(payload)/admin/importMap.js
+coverage
+playwright-report
+test-results

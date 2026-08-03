@@ -1,0 +1,90 @@
+---
+export const prerender = false
+
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { getAuthorBySlug, getPostsByAuthor, type Author, type Post } from '../../lib/payload'
+
+const { slug } = Astro.params
+if (!slug) {
+  return Astro.redirect('/')
+}
+
+let author: Author | null = null
+let posts: Post[] = []
+
+try {
+  author = await getAuthorBySlug(slug)
+  if (author) {
+    posts = await getPostsByAuthor(author.id)
+  }
+} catch {
+  author = null
+}
+
+if (!author) {
+  return new Response(null, { status: 404, statusText: 'Not Found' })
+}
+
+function formatDate(iso?: string | null): string {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+---
+
+<BaseLayout title={`${author.name} · SNIPPETS`} width="home">
+  <article>
+    <header class="mb-10">
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--page-muted)]">
+        Author
+      </p>
+      <h1 class="mt-2 text-4xl font-semibold tracking-tight">{author.name}</h1>
+      {(author.jobTitle || author.organization) && (
+        <p class="mt-2 text-[var(--page-muted)]">
+          {[author.jobTitle, author.organization].filter(Boolean).join(' · ')}
+        </p>
+      )}
+      {author.bio && <p class="mt-6 max-w-[65ch] leading-relaxed">{author.bio}</p>}
+      {author.credentials && (
+        <p class="mt-4 max-w-[65ch] text-sm text-[var(--page-muted)]">{author.credentials}</p>
+      )}
+      {author.sameAs && author.sameAs.length > 0 && (
+        <ul class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+          {author.sameAs.map((item) => (
+            <li>
+              <a href={item.url} rel="noopener noreferrer">
+                {item.url}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </header>
+
+    <h2 class="text-2xl font-semibold tracking-tight">Posts</h2>
+    {posts.length === 0 ? (
+      <p class="mt-4 text-[var(--page-muted)]">No published posts for this author yet.</p>
+    ) : (
+      <ul class="mt-4 border-t border-[var(--page-border)]">
+        {posts.map((post) => (
+          <li class="border-b border-[var(--page-border)] py-5">
+            <a
+              href={`/posts/${post.slug}`}
+              class="text-xl font-semibold text-[var(--page-fg)] no-underline hover:text-[var(--page-accent)]"
+            >
+              {post.title}
+            </a>
+            <p class="mt-1 text-sm text-[var(--page-muted)]">
+              {[formatDate(post.publishedAt), post.readingTime ? `${post.readingTime} min read` : '']
+                .filter(Boolean)
+                .join(' · ')}
+            </p>
+          </li>
+        ))}
+      </ul>
+    )}
+  </article>
+</BaseLayout>
