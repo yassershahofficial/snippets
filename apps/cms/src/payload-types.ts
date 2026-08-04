@@ -71,6 +71,7 @@ export interface Config {
     media: Media;
     authors: Author;
     tags: Tag;
+    badges: Badge;
     posts: Post;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -83,6 +84,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     authors: AuthorsSelect<false> | AuthorsSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
+    badges: BadgesSelect<false> | BadgesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -203,6 +205,22 @@ export interface Tag {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "badges".
+ */
+export interface Badge {
+  id: string;
+  name: string;
+  slug: string;
+  logo: string | Media;
+  /**
+   * Optional URL wrapping the badge on showcase pages.
+   */
+  website?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts".
  */
 export interface Post {
@@ -210,7 +228,7 @@ export interface Post {
   title: string;
   slug: string;
   /**
-   * Foundation ships essay fields only; showcase/snippet schemas come later.
+   * Essay, showcase, and snippet layouts are available.
    */
   layout: 'essay' | 'showcase' | 'snippet';
   authors: (string | Author)[];
@@ -220,6 +238,41 @@ export interface Post {
    * Estimated minutes; computed on save.
    */
   readingTime?: number | null;
+  /**
+   * One-line summary for cards, meta, and JSON-LD. Optional.
+   */
+  summary?: string | null;
+  /**
+   * Optional YouTube embed or product image/GIF. Omit to skip the hero.
+   */
+  heroMedia?: {
+    /**
+     * Leave empty if this showcase has no hero media.
+     */
+    type?: ('youtube' | 'image') | null;
+    /**
+     * Full YouTube watch or share URL.
+     */
+    youtubeUrl?: string | null;
+    image?: (string | null) | Media;
+  };
+  /**
+   * Flexible links (GitHub, live demo, docs, …). Order is display order.
+   */
+  ctaLinks?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Select tech badges (with logos) or create new ones in the Badges collection.
+   */
+  badges?: (string | Badge)[] | null;
+  /**
+   * Shortcuts: Bold Ctrl/Cmd+B · Italic Ctrl/Cmd+I · Underline Ctrl/Cmd+U · Highlight via toolbar Text State → Highlight (no shortcut) · Code block via / → Code (or Blocks toolbar)
+   */
   body: {
     root: {
       type: string;
@@ -285,6 +338,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tags';
         value: string | Tag;
+      } | null)
+    | ({
+        relationTo: 'badges';
+        value: string | Badge;
       } | null)
     | ({
         relationTo: 'posts';
@@ -406,6 +463,18 @@ export interface TagsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "badges_select".
+ */
+export interface BadgesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  logo?: T;
+  website?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts_select".
  */
 export interface PostsSelect<T extends boolean = true> {
@@ -416,6 +485,22 @@ export interface PostsSelect<T extends boolean = true> {
   tags?: T;
   publishedAt?: T;
   readingTime?: T;
+  summary?: T;
+  heroMedia?:
+    | T
+    | {
+        type?: T;
+        youtubeUrl?: T;
+        image?: T;
+      };
+  ctaLinks?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  badges?: T;
   body?: T;
   seo?:
     | T

@@ -32,6 +32,20 @@ export type Tag = {
   description?: string | null
 }
 
+export type Badge = {
+  id: string
+  name: string
+  slug: string
+  logo: Media | string
+  website?: string | null
+}
+
+export type CtaLink = {
+  label: string
+  url: string
+  id?: string | null
+}
+
 export type Post = {
   id: string
   title: string
@@ -43,6 +57,14 @@ export type Post = {
   updatedAt?: string
   authors?: (Author | string)[] | null
   tags?: (Tag | string)[] | null
+  heroMedia?: {
+    type?: 'youtube' | 'image' | null
+    youtubeUrl?: string | null
+    image?: Media | string | null
+  } | null
+  ctaLinks?: CtaLink[] | null
+  badges?: (Badge | string)[] | null
+  summary?: string | null
   seo?: {
     metaTitle?: string | null
     metaDescription?: string | null

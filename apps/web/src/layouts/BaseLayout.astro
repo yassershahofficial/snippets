@@ -5,12 +5,14 @@ import ThemeToggle from '../components/ThemeToggle.astro'
 interface Props {
   title: string
   description?: string
-  /** Constrain main content; home is slightly wider than essay reading. */
-  width?: 'home' | 'reading'
+  /** Constrain main content; snippet is wider for TOC + body. */
+  width?: 'home' | 'reading' | 'showcase' | 'snippet'
   ogImageUrl?: string
   ogImageAlt?: string
   canonical?: string
   noIndex?: boolean
+  /** Pre-stringified JSON-LD object or array for schema.org. */
+  jsonLd?: string
 }
 
 const {
@@ -21,9 +23,17 @@ const {
   ogImageAlt,
   canonical,
   noIndex = false,
+  jsonLd,
 } = Astro.props
 
-const mainMax = width === 'reading' ? 'max-w-[65ch]' : 'max-w-3xl'
+const mainMax =
+  width === 'reading'
+    ? 'max-w-[65ch]'
+    : width === 'showcase'
+      ? 'max-w-4xl'
+      : width === 'snippet'
+        ? 'max-w-5xl'
+        : 'max-w-3xl'
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'http://localhost:4321').replace(/\/$/, '')
 const canonicalUrl = canonical || new URL(Astro.url.pathname, `${siteUrl}/`).href
 ---
@@ -42,6 +52,7 @@ const canonicalUrl = canonical || new URL(Astro.url.pathname, `${siteUrl}/`).hre
     <meta property="og:url" content={canonicalUrl} />
     {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
     {ogImageUrl && ogImageAlt && <meta property="og:image:alt" content={ogImageAlt} />}
+    {jsonLd && <script type="application/ld+json" set:html={jsonLd} />}
     <title>{title}</title>
     <script is:inline>
       ;(function () {

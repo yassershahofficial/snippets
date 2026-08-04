@@ -163,7 +163,7 @@ PAYLOAD_SECRET=paste-openssl-rand-hex-32-here
 openssl rand -hex 32
 ```
 
-Important: `CMS_HOST_PORT` / `WEB_HOST_PORT` must match what you put in the **host** Caddyfile.
+Important: `CMS_HOST_PORT` / `WEB_HOST_PORT` must match what you put in the **host** Caddyfile. Also replace every `snippets.example.com` / `cms.snippets.example.com` in `.env` with your real HTTPS origins (e.g. `https://snippets.yassershahofficial.stream`).
 
 ---
 
@@ -202,23 +202,30 @@ curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:13000/admin
 
 ### Caddy (recommended)
 
-Use `deploy/Caddyfile.host.example` as a template. Merge into your main Caddyfile (or `import` a file), adjusting ports:
+Use `deploy/Caddyfile.host.example` as a template. **Replace every `*.example.com` hostname** with your real DNS names (same hosts as in `.env`, without `https://`). Upstream ports must match `WEB_HOST_PORT` / `CMS_HOST_PORT`.
+
+Merge into your main Caddyfile (or `import` a file). Example for this project’s subdomain:
 
 ```caddy
-snippets.example.com {
+snippets.yassershahofficial.stream {
 	encode gzip
 	reverse_proxy 127.0.0.1:14321
 }
 
-cms.snippets.example.com {
+cms.snippets.yassershahofficial.stream {
 	encode gzip
 	reverse_proxy 127.0.0.1:13000
 }
 ```
 
+Leaving `snippets.example.com` / `cms.snippets.example.com` in place will break HTTPS (`TLS connect error` / `tlsv1 alert internal error`) even when loopback curls return `200`.
+
 Validate and reload **without** restarting unrelated containers:
 
 ```bash
+# confirm the blocks you added use real hostnames:
+grep -E 'yassershahofficial|example\.com' /etc/caddy/Caddyfile
+
 caddy validate --config /etc/caddy/Caddyfile
 systemctl reload caddy
 # or: caddy reload --config /etc/caddy/Caddyfile
@@ -226,10 +233,12 @@ systemctl reload caddy
 
 ### nginx (if that’s what you already use)
 
+Same rule: use your real `server_name` values, not `example.com`.
+
 ```nginx
 server {
   listen 443 ssl http2;
-  server_name snippets.example.com;
+  server_name snippets.yassershahofficial.stream;
   # ssl_certificate ...;
   location / {
     proxy_pass http://127.0.0.1:14321;
@@ -241,7 +250,7 @@ server {
 
 server {
   listen 443 ssl http2;
-  server_name cms.snippets.example.com;
+  server_name cms.snippets.yassershahofficial.stream;
   # ssl_certificate ...;
   location / {
     proxy_pass http://127.0.0.1:13000;
@@ -263,9 +272,11 @@ nginx -t && systemctl reload nginx
 From your laptop:
 
 ```bash
-curl -I https://snippets.example.com
-curl -I https://cms.snippets.example.com/admin
+curl -I https://snippets.yassershahofficial.stream
+curl -I https://cms.snippets.yassershahofficial.stream/admin
 ```
+
+Local loopback `200` only proves containers are up. If HTTPS fails with `TLS connect error` / `tlsv1 alert internal error`, the host proxy still has placeholder hostnames, DNS is wrong, or ACME cannot reach `:80` — re-check §6 and `journalctl -u caddy -n 80` (or nginx error log).
 
 Then create the first Payload admin user and a published essay post; confirm the public site lists it.
 
@@ -322,6 +333,7 @@ Back up `/opt/snippets/.env` and the `snippets_media` volume separately. Do not 
 |---------|----------------|
 | `bind: address already in use` | Change `CMS_HOST_PORT` / `WEB_HOST_PORT`; ensure compose binds `127.0.0.1:...` |
 | Site 502 from host Caddy | Wrong upstream port vs `.env`; containers not healthy (`docker compose logs`) |
+| `TLS connect error` / `tlsv1 alert internal error` | Host Caddy/nginx still has `*.example.com` or wrong `server_name`; DNS not on this VPS; ACME blocked — fix §6 then reload proxy |
 | Other site broke after reload | Syntax error in shared Caddyfile — `caddy validate` before reload; keep snippets blocks separate |
 | Images won’t pull | GHCR login / package permissions / wrong image path (must be lowercase) |
 | Media URLs still localhost | Web image was built with wrong `PUBLIC_PAYLOAD_URL` — fix GitHub Actions variables and rebuild/push, then `docker compose pull` |

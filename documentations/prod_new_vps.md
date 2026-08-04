@@ -164,7 +164,42 @@ Edit at least:
 | `PUBLIC_PAYLOAD_URL` | same as CMS public URL |
 | `CORS_ORIGINS` / `CSRF_ORIGINS` | `https://snippets.example.com` |
 
-Edit `Caddyfile` hostnames to match DNS (same names as in `.env`).
+### Edit `Caddyfile` (required — do not leave `example.com`)
+
+The file shipped in `deploy/Caddyfile` uses placeholder hostnames. **Caddy will not issue TLS for your real domain until you replace them.** Hostnames must match DNS and the hosts in `.env` (without `https://`).
+
+```bash
+nano /opt/snippets/Caddyfile
+```
+
+Example for this project’s subdomain (adjust if yours differ):
+
+```caddy
+snippets.yassershahofficial.stream {
+	encode gzip
+	reverse_proxy web:4321
+}
+
+cms.snippets.yassershahofficial.stream {
+	encode gzip
+	reverse_proxy cms:3000
+}
+```
+
+Confirm before starting (or after editing):
+
+```bash
+cat /opt/snippets/Caddyfile
+# must show your real hosts — not snippets.example.com
+```
+
+If you change the Caddyfile after the stack is already up:
+
+```bash
+cd /opt/snippets
+docker compose --profile caddy up -d --force-recreate caddy
+docker compose logs -f caddy --tail=50
+```
 
 Generate secret:
 
@@ -210,11 +245,19 @@ curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/admin
 From your laptop (after TLS is issued — can take a minute):
 
 ```bash
-curl -I https://snippets.example.com
-curl -I https://cms.snippets.example.com/admin
+curl -I https://snippets.yassershahofficial.stream
+curl -I https://cms.snippets.yassershahofficial.stream/admin
 ```
 
-If TLS fails: confirm DNS, UFW 80/443, and `docker compose logs caddy`.
+Local `200` on `:4321` / `:3000` only proves the apps are up. HTTPS still needs a correct **Caddyfile**, DNS A records, and UFW `80`/`443`.
+
+If you see `TLS connect error` / `tlsv1 alert internal error`:
+
+1. `cat /opt/snippets/Caddyfile` — hostnames must be your real domain, not `*.example.com`
+2. `getent hosts snippets.yassershahofficial.stream cms.snippets.yassershahofficial.stream` — both resolve to this VPS
+3. `ufw status` — `80/tcp`, `443/tcp` (and usually `443/udp`) allowed
+4. `docker compose logs caddy --tail=80` — look for ACME / certificate errors
+5. After fixing the Caddyfile: `docker compose --profile caddy up -d --force-recreate caddy`
 
 ---
 
@@ -267,7 +310,8 @@ Copy `/opt/snippets/.env` somewhere safe offline. Media lives in the Docker volu
 | Symptom | Check |
 |---------|--------|
 | `pull access denied` | `docker login ghcr.io`; package visibility; image name lowercase |
-| Caddy TLS errors | DNS A records; ports 80/443 free and allowed in UFW |
+| `TLS connect error` / `tlsv1 alert internal error` | Caddyfile still has `*.example.com`, or DNS/UFW blocking ACME — see §7; fix hosts then `--force-recreate caddy` |
+| Caddy TLS / ACME errors | Real hostnames in `/opt/snippets/Caddyfile`; DNS A records; ports 80/443 free and allowed in UFW; `docker compose logs caddy` |
 | CORS / admin login issues | `CORS_ORIGINS` / `CSRF_ORIGINS` / `PAYLOAD_PUBLIC_SERVER_URL` match HTTPS hostnames |
 | Site can’t reach CMS | `PAYLOAD_URL` inside compose is `http://cms:3000` (already set); browser media needs `PUBLIC_PAYLOAD_URL` baked at **image build** time — rebuild GHCR images if you change public CMS URL |
 | Port already allocated | Change `CMS_HOST_PORT` / `WEB_HOST_PORT` in `.env` (loopback only) |

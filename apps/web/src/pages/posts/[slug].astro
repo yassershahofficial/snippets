@@ -1,9 +1,13 @@
 ---
 export const prerender = false
 
+import EssayPost from '../../components/posts/EssayPost.astro'
+import ShowcasePost from '../../components/posts/ShowcasePost.astro'
+import SnippetPost from '../../components/posts/SnippetPost.astro'
 import BaseLayout from '../../layouts/BaseLayout.astro'
-import { absolutizeMediaUrl, lexicalToHtml } from '../../lib/lexical'
-import { getPostBySlug, type Author, type Media, type Post, type Tag } from '../../lib/payload'
+import { buildShowcaseJsonLd, buildSnippetJsonLd, jsonLdScriptContent } from '../../lib/jsonld'
+import { absolutizeMediaUrl, extractTocFromLexical, lexicalToHtml } from '../../lib/lexical'
+import { getPostBySlug, type Author, type Badge, type Media, type Post, type Tag } from '../../lib/payload'
 
 const { slug } = Astro.params
 if (!slug) {
@@ -23,9 +27,14 @@ if (!post) {
 
 const authors = (post.authors ?? []).filter((a): a is Author => typeof a === 'object' && a !== null)
 const tags = (post.tags ?? []).filter((t): t is Tag => typeof t === 'object' && t !== null)
-const bodyHtml = lexicalToHtml(post.body)
+const badges = (post.badges ?? []).filter((b): b is Badge => typeof b === 'object' && b !== null)
+
+const isSnippet = post.layout === 'snippet'
+const bodyHtml = lexicalToHtml(post.body, { codeCopyable: isSnippet })
+const toc = isSnippet ? extractTocFromLexical(post.body) : []
+
 const pageTitle = post.seo?.metaTitle || post.title
-const pageDescription = post.seo?.metaDescription || undefined
+const pageDescription = post.seo?.metaDescription || post.summary || undefined
 
 const ogImage =
   post.seo?.ogImage && typeof post.seo.ogImage === 'object'
@@ -33,78 +42,67 @@ const ogImage =
     : null
 const ogImageUrl = absolutizeMediaUrl(ogImage?.url)
 const ogImageAlt = ogImage?.alt || undefined
+
+const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'http://localhost:4321').replace(/\/$/, '')
+const pageUrl = post.seo?.canonical || new URL(Astro.url.pathname, `${siteUrl}/`).href
+
+const jsonLd =
+  post.layout === 'showcase'
+    ? jsonLdScriptContent(
+        buildShowcaseJsonLd({
+          post,
+          authors,
+          badges,
+          pageUrl,
+          description: pageDescription,
+        }),
+      )
+    : post.layout === 'snippet'
+      ? jsonLdScriptContent(
+          buildSnippetJsonLd({
+            post,
+            authors,
+            pageUrl,
+            description: pageDescription,
+          }),
+        )
+      : undefined
+
+const layoutWidth =
+  post.layout === 'showcase' ? 'showcase' : post.layout === 'snippet' ? 'snippet' : 'reading'
 ---
 
 <BaseLayout
   title={pageTitle}
   description={pageDescription}
-  width="reading"
+  width={layoutWidth}
   ogImageUrl={ogImageUrl || undefined}
   ogImageAlt={ogImageAlt}
   canonical={post.seo?.canonical || undefined}
   noIndex={Boolean(post.seo?.noIndex)}
+  jsonLd={jsonLd}
 >
   {
-    post.layout !== 'essay' ? (
+    post.layout === 'essay' ? (
+      <EssayPost
+        post={post}
+        authors={authors}
+        tags={tags}
+        bodyHtml={bodyHtml}
+        ogImageUrl={ogImageUrl}
+        ogImageAlt={ogImageAlt}
+        ogImage={ogImage}
+      />
+    ) : post.layout === 'showcase' ? (
+      <ShowcasePost post={post} authors={authors} tags={tags} badges={badges} bodyHtml={bodyHtml} />
+    ) : post.layout === 'snippet' ? (
+      <SnippetPost post={post} authors={authors} tags={tags} toc={toc} bodyHtml={bodyHtml} />
+    ) : (
       <article>
         <h1 class="text-4xl font-semibold tracking-tight">{post.title}</h1>
         <p class="mt-6 border border-[var(--page-border)] bg-[var(--page-code-bg)] px-4 py-3 text-sm text-[var(--page-muted)]">
-          Layout <code class="font-mono">{post.layout}</code> is reserved for a later phase. Foundation
-          only renders <code class="font-mono">essay</code> posts.
+          Unknown layout <code class="font-mono">{post.layout}</code>.
         </p>
-      </article>
-    ) : (
-      <article>
-        <header class="mb-10">
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--page-muted)]">
-            Essay
-          </p>
-          <h1 class="mt-2 text-4xl font-semibold tracking-tight text-balance">{post.title}</h1>
-          <p class="mt-4 text-sm text-[var(--page-muted)]">
-            {post.publishedAt
-              ? new Date(post.publishedAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })
-              : ''}
-            {post.readingTime ? ` · ${post.readingTime} min read` : ''}
-          </p>
-          {authors.length > 0 && (
-            <ul class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm">
-              {authors.map((author) => (
-                <li>
-                  <a href={`/authors/${author.slug}`}>{author.name}</a>
-                </li>
-              ))}
-            </ul>
-          )}
-          {tags.length > 0 && (
-            <ul class="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-sm text-[var(--page-muted)]">
-              {tags.map((tag) => (
-                <li>
-                  <a href={`/tags/${tag.slug}`} class="no-underline hover:text-[var(--page-accent)]">
-                    #{tag.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
-          {ogImageUrl && (
-            <figure class="prose-figure mt-8">
-              <img
-                src={ogImageUrl}
-                alt={ogImageAlt || ''}
-                width={ogImage?.width ?? undefined}
-                height={ogImage?.height ?? undefined}
-                loading="eager"
-                decoding="async"
-              />
-              {ogImageAlt && <figcaption>{ogImageAlt}</figcaption>}
-            </figure>
-          )}
-        </header>
-        <div class="prose-body" set:html={bodyHtml} />
       </article>
     )
   }
