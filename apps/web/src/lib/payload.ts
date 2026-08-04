@@ -23,6 +23,7 @@ export type Author = {
   organization?: string | null
   sameAs?: { url: string }[] | null
   avatar?: Media | string | null
+  updatedAt?: string
 }
 
 export type Tag = {
@@ -30,6 +31,7 @@ export type Tag = {
   name: string
   slug: string
   description?: string | null
+  updatedAt?: string
 }
 
 export type Badge = {

@@ -35,8 +35,10 @@ docker compose up --build
 3. Create a **Tag** (name + slug).
 4. Create a **Post**: layout `essay`, attach author/tag, write body, **Publish**.
 5. Refresh http://localhost:4321 — the post title should appear.
-6. Open `/posts/<slug>` — title + body HTML should render.
+6. Open `/posts/<slug>` — title + body HTML should render; view source for essay `BlogPosting` JSON-LD.
 7. Optional: `/authors/<slug>` and `/tags/<slug>` stub pages.
+8. Open `/sitemap.xml` — home, published posts, authors, and tags should appear.
+9. Open `/robots.txt` — crawlers allowed; `Sitemap:` points at this site’s sitemap.
 
 If a newly published post does not appear, hard-refresh the browser. Post/author/tag routes fetch live from Payload in foundation mode (`prerender = false`) so restarts are not required for new slugs.
 
@@ -54,7 +56,7 @@ Use `PAYLOAD_URL=http://localhost:3000` in `apps/web/.env`.
 ## Project layout
 
 ```text
-apps/cms   Payload 3 (Authors, Tags, Posts — essay-ready)
+apps/cms   Payload 3 (Authors, Tags, Badges, Posts — essay/showcase/snippet)
 apps/web   Astro hybrid shell + Tailwind
 docker-compose.yml   snippets_* network/volumes (isolated)
 ```
@@ -70,4 +72,4 @@ Local `docker compose` continues to use `Dockerfile.dev` (hot reload). Productio
 
 ## Out of scope (foundation)
 
-Essay visual polish, snippet/showcase schemas, JSON-LD, sitemap/robots, publish webhook.
+Essay visual polish, author/tag JSON-LD, prerender + publish webhook.

@@ -1,9 +1,17 @@
-import type { Author, Badge, Post } from './payload'
+import type { Author, Badge, Post, Tag } from './payload'
 
 type JsonLd = Record<string, unknown>
 
-function siteOrigin(): string {
+export function siteOrigin(): string {
   return (import.meta.env.PUBLIC_SITE_URL || 'http://localhost:4321').replace(/\/$/, '')
+}
+
+function publisherOrganization(origin: string): JsonLd {
+  return {
+    '@type': 'Organization',
+    name: 'SNIPPETS',
+    url: origin,
+  }
 }
 
 function isGithubUrl(url: string): boolean {
@@ -29,6 +37,58 @@ function personNodes(authors: Author[], origin: string): JsonLd[] {
   })
 }
 
+function breadcrumbs(origin: string, pageUrl: string, title: string): JsonLd {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: `${origin}/`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: title,
+        item: pageUrl,
+      },
+    ],
+  }
+}
+
+export function buildEssayJsonLd(input: {
+  post: Post
+  authors: Author[]
+  tags: Tag[]
+  pageUrl: string
+  description?: string
+  imageUrl?: string
+}): JsonLd[] {
+  const { post, authors, tags, pageUrl, description, imageUrl } = input
+  const origin = siteOrigin()
+  const authorsLd = personNodes(authors, origin)
+  const tagNames = tags.map((t) => t.name).filter(Boolean)
+
+  const blogPosting: JsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    mainEntityOfPage: pageUrl,
+    url: pageUrl,
+    publisher: publisherOrganization(origin),
+    ...(description ? { description } : {}),
+    ...(post.publishedAt ? { datePublished: post.publishedAt } : {}),
+    ...(post.updatedAt ? { dateModified: post.updatedAt } : {}),
+    ...(authorsLd.length ? { author: authorsLd } : {}),
+    ...(imageUrl ? { image: imageUrl } : {}),
+    ...(tagNames.length ? { keywords: tagNames.join(', ') } : {}),
+  }
+
+  return [breadcrumbs(origin, pageUrl, post.title), blogPosting]
+}
+
 export function buildShowcaseJsonLd(input: {
   post: Post
   authors: Author[]
@@ -44,25 +104,6 @@ export function buildShowcaseJsonLd(input: {
   const badgeNames = badges.map((b) => b.name).filter(Boolean)
   const authorsLd = personNodes(authors, origin)
 
-  const breadcrumbs: JsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: `${origin}/`,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: post.title,
-        item: pageUrl,
-      },
-    ],
-  }
-
   const techArticle: JsonLd = {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
@@ -77,7 +118,7 @@ export function buildShowcaseJsonLd(input: {
     ...(github ? { codeRepository: github.url } : {}),
   }
 
-  const graph: JsonLd[] = [breadcrumbs, techArticle]
+  const graph: JsonLd[] = [breadcrumbs(origin, pageUrl, post.title), techArticle]
 
   if (live) {
     graph.push({
@@ -111,25 +152,6 @@ export function buildSnippetJsonLd(input: {
   const authorsLd = personNodes(authors, origin)
   const summary = post.summary?.trim() || description
 
-  const breadcrumbs: JsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: `${origin}/`,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: post.title,
-        item: pageUrl,
-      },
-    ],
-  }
-
   const techArticle: JsonLd = {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
@@ -142,7 +164,7 @@ export function buildSnippetJsonLd(input: {
     ...(authorsLd.length ? { author: authorsLd } : {}),
   }
 
-  return [breadcrumbs, techArticle]
+  return [breadcrumbs(origin, pageUrl, post.title), techArticle]
 }
 
 export function jsonLdScriptContent(nodes: JsonLd[]): string {

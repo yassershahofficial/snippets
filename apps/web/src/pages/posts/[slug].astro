@@ -5,8 +5,8 @@ import EssayPost from '../../components/posts/EssayPost.astro'
 import ShowcasePost from '../../components/posts/ShowcasePost.astro'
 import SnippetPost from '../../components/posts/SnippetPost.astro'
 import BaseLayout from '../../layouts/BaseLayout.astro'
-import { buildShowcaseJsonLd, buildSnippetJsonLd, jsonLdScriptContent } from '../../lib/jsonld'
-import { absolutizeMediaUrl, extractTocFromLexical, lexicalToHtml } from '../../lib/lexical'
+import { buildEssayJsonLd, buildShowcaseJsonLd, buildSnippetJsonLd, jsonLdScriptContent } from '../../lib/jsonld'
+import { absolutizeMediaUrl, excerptText, extractTocFromLexical, lexicalToHtml, lexicalToPlainText } from '../../lib/lexical'
 import { getPostBySlug, type Author, type Badge, type Media, type Post, type Tag } from '../../lib/payload'
 
 const { slug } = Astro.params
@@ -34,7 +34,11 @@ const bodyHtml = lexicalToHtml(post.body, { codeCopyable: isSnippet })
 const toc = isSnippet ? extractTocFromLexical(post.body) : []
 
 const pageTitle = post.seo?.metaTitle || post.title
-const pageDescription = post.seo?.metaDescription || post.summary || undefined
+const pageDescription =
+  post.seo?.metaDescription ||
+  post.summary ||
+  excerptText(lexicalToPlainText(post.body)) ||
+  undefined
 
 const ogImage =
   post.seo?.ogImage && typeof post.seo.ogImage === 'object'
@@ -47,26 +51,37 @@ const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'http://localhost:4321').rep
 const pageUrl = post.seo?.canonical || new URL(Astro.url.pathname, `${siteUrl}/`).href
 
 const jsonLd =
-  post.layout === 'showcase'
+  post.layout === 'essay'
     ? jsonLdScriptContent(
-        buildShowcaseJsonLd({
+        buildEssayJsonLd({
           post,
           authors,
-          badges,
+          tags,
           pageUrl,
           description: pageDescription,
+          imageUrl: ogImageUrl || undefined,
         }),
       )
-    : post.layout === 'snippet'
+    : post.layout === 'showcase'
       ? jsonLdScriptContent(
-          buildSnippetJsonLd({
+          buildShowcaseJsonLd({
             post,
             authors,
+            badges,
             pageUrl,
             description: pageDescription,
           }),
         )
-      : undefined
+      : post.layout === 'snippet'
+        ? jsonLdScriptContent(
+            buildSnippetJsonLd({
+              post,
+              authors,
+              pageUrl,
+              description: pageDescription,
+            }),
+          )
+        : undefined
 
 const layoutWidth =
   post.layout === 'showcase' ? 'showcase' : post.layout === 'snippet' ? 'snippet' : 'reading'
