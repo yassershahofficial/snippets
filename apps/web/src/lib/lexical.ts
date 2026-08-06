@@ -1,3 +1,5 @@
+import katex from 'katex'
+import { resolveFormulaLatex } from './formulaMath'
 import { HIGHLIGHT_STATE_KEY, HIGHLIGHT_STATE_VALUE } from './textStateConfig'
 
 type LexicalNode = {
@@ -30,7 +32,7 @@ export type TocItem = {
 }
 
 export type LexicalHtmlOptions = {
-  /** Wrap code blocks for copy UI (snippet pages). */
+  /** Wrap code blocks for copy UI. Defaults to true. */
   codeCopyable?: boolean
 }
 
@@ -105,6 +107,9 @@ class HeadingIdAllocator {
 function extractPlainText(node: LexicalNode | null | undefined): string {
   if (!node) return ''
   if (typeof node.text === 'string') return node.text
+  if (node.type === 'block' && node.fields?.blockType === 'formula') {
+    return typeof node.fields.latex === 'string' ? node.fields.latex : ''
+  }
   if (!node.children?.length) return ''
   return node.children.map(extractPlainText).join(' ')
 }
@@ -173,7 +178,7 @@ function renderCodeBlockFromParts(
   const classAttr = lang ? ` class="language-${escapeHtml(lang)}"` : ''
   const pre = `<pre${langAttr}><code${classAttr}>${escapeHtml(code)}</code></pre>`
 
-  if (!options.codeCopyable) return pre
+  if (options.codeCopyable === false) return pre
 
   const langLabel = lang
     ? `<span class="code-block__lang">${escapeHtml(lang)}</span>`
@@ -188,13 +193,42 @@ function renderCodeBlock(node: LexicalNode, options: LexicalHtmlOptions): string
   return renderCodeBlockFromParts(code, language, options)
 }
 
-function renderPayloadCodeBlock(node: LexicalNode, options: LexicalHtmlOptions): string {
+function renderFormulaBlock(node: LexicalNode): string {
   const fields = node.fields
   if (!fields || typeof fields !== 'object') return ''
-  if (fields.blockType !== 'Code') return ''
-  const code = typeof fields.code === 'string' ? fields.code : ''
-  const language = typeof fields.language === 'string' ? fields.language : ''
-  return renderCodeBlockFromParts(code, language, options)
+  const expression = typeof fields.latex === 'string' ? fields.latex.trim() : ''
+  if (!expression) return ''
+  const mode = typeof fields.mode === 'string' ? fields.mode : null
+  const latex = resolveFormulaLatex(expression, mode)
+
+  try {
+    const rendered = katex.renderToString(latex, {
+      throwOnError: false,
+      displayMode: true,
+      output: 'html',
+      strict: 'ignore',
+    })
+    return `<div class="formula-block" data-formula-block role="math" aria-label="${escapeHtml(expression)}">${rendered}</div>`
+  } catch {
+    return `<pre class="formula-block formula-block--fallback"><code>${escapeHtml(expression)}</code></pre>`
+  }
+}
+
+function renderPayloadBlock(node: LexicalNode, options: LexicalHtmlOptions): string {
+  const fields = node.fields
+  if (!fields || typeof fields !== 'object') return ''
+
+  switch (fields.blockType) {
+    case 'Code': {
+      const code = typeof fields.code === 'string' ? fields.code : ''
+      const language = typeof fields.language === 'string' ? fields.language : ''
+      return renderCodeBlockFromParts(code, language, options)
+    }
+    case 'formula':
+      return renderFormulaBlock(node)
+    default:
+      return ''
+  }
 }
 
 function renderNode(node: LexicalNode, ctx: RenderContext): string {
@@ -227,7 +261,7 @@ function renderNode(node: LexicalNode, ctx: RenderContext): string {
     case 'code':
       return renderCodeBlock(node, ctx.options)
     case 'block':
-      return renderPayloadCodeBlock(node, ctx.options)
+      return renderPayloadBlock(node, ctx.options)
     case 'upload':
       return renderUpload(node)
     case 'horizontalrule':

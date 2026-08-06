@@ -567,6 +567,23 @@ export interface CollectionsWidget {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FormulaBlock".
+ */
+export interface FormulaBlock {
+  /**
+   * Simple keeps words and spaces readable. Use LaTeX for fractions, powers, Greek letters, etc.
+   */
+  mode: 'simple' | 'latex';
+  /**
+   * Simple example: Required VRAM (GB) = (Parameters (Billions) x Precision (Bits))/8 x 1.2 — `/` renders as a fraction. LaTeX example: E = mc^2 or \frac{a}{b}
+   */
+  latex: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'formula';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "auth".
  */
 export interface Auth {

@@ -4,6 +4,8 @@ export const prerender = false
 import EssayPost from '../../components/posts/EssayPost.astro'
 import ShowcasePost from '../../components/posts/ShowcasePost.astro'
 import SnippetPost from '../../components/posts/SnippetPost.astro'
+import CopyCodeEnhancer from '../../components/posts/CopyCodeEnhancer.astro'
+import FitFormulaEnhancer from '../../components/posts/FitFormulaEnhancer.astro'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { buildEssayJsonLd, buildShowcaseJsonLd, buildSnippetJsonLd, jsonLdScriptContent } from '../../lib/jsonld'
 import { absolutizeMediaUrl, excerptText, extractTocFromLexical, lexicalToHtml, lexicalToPlainText } from '../../lib/lexical'
@@ -30,7 +32,7 @@ const tags = (post.tags ?? []).filter((t): t is Tag => typeof t === 'object' && 
 const badges = (post.badges ?? []).filter((b): b is Badge => typeof b === 'object' && b !== null)
 
 const isSnippet = post.layout === 'snippet'
-const bodyHtml = lexicalToHtml(post.body, { codeCopyable: isSnippet })
+const bodyHtml = lexicalToHtml(post.body, { codeCopyable: true })
 const toc = isSnippet ? extractTocFromLexical(post.body) : []
 
 const pageTitle = post.seo?.metaTitle || post.title
@@ -121,4 +123,6 @@ const layoutWidth =
       </article>
     )
   }
+  <CopyCodeEnhancer />
+  <FitFormulaEnhancer />
 </BaseLayout>

@@ -1,7 +1,6 @@
 ---
 import type { Author, Post, Tag } from '../../lib/payload'
 import type { TocItem } from '../../lib/lexical'
-import CopyCodeEnhancer from './CopyCodeEnhancer.astro'
 
 interface Props {
   post: Post
@@ -83,5 +82,3 @@ const { post, authors, tags, toc, bodyHtml } = Astro.props
     <div class="snippet-body prose-body" set:html={bodyHtml} />
   </div>
 </article>
-
-<CopyCodeEnhancer />

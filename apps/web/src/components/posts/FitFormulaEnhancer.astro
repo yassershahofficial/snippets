@@ -1,0 +1,51 @@
+---
+/** Shrinks formula blocks so KaTeX fits the column without horizontal scroll. */
+---
+
+<script>
+  const MIN_PX = 11
+
+  function fitFormula(block) {
+    const display = block.querySelector('.katex-display, .katex')
+    if (!(display instanceof HTMLElement)) return
+    if (block.classList.contains('formula-block--fallback')) return
+
+    if (!block.dataset.formulaBaseSize) {
+      block.dataset.formulaBaseSize = String(parseFloat(getComputedStyle(block).fontSize) || 18)
+    }
+
+    let lo = MIN_PX
+    let hi = Number(block.dataset.formulaBaseSize)
+    block.style.fontSize = `${hi}px`
+    if (display.scrollWidth <= block.clientWidth + 1) return
+
+    while (hi - lo > 0.35) {
+      const mid = (lo + hi) / 2
+      block.style.fontSize = `${mid}px`
+      if (display.scrollWidth <= block.clientWidth + 1) lo = mid
+      else hi = mid
+    }
+    block.style.fontSize = `${lo}px`
+  }
+
+  function fitAll() {
+    document.querySelectorAll('[data-formula-block]').forEach((block) => {
+      if (block instanceof HTMLElement) fitFormula(block)
+    })
+  }
+
+  function observeAll() {
+    document.querySelectorAll('[data-formula-block]').forEach((el) => {
+      if (el instanceof HTMLElement) observer.observe(el)
+    })
+  }
+
+  const observer = new ResizeObserver(() => fitAll())
+
+  fitAll()
+  observeAll()
+  document.addEventListener('astro:page-load', () => {
+    fitAll()
+    observeAll()
+  })
+</script>

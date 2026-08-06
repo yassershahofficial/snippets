@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { config as loadEnv } from 'dotenv'
 
+import { FormulaBlock } from './blocks/Formula'
 import { Authors } from './collections/Authors'
 import { Badges } from './collections/Badges'
 import { Media } from './collections/Media'
@@ -73,6 +74,7 @@ export default buildConfig({
               caddy: 'Caddyfile',
             },
           }),
+          FormulaBlock,
         ],
       }),
     ],

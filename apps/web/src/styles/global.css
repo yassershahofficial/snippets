@@ -4,6 +4,7 @@
 @import "@fontsource/source-serif-4/700.css";
 @import "@fontsource/ibm-plex-mono/400.css";
 @import "@fontsource/ibm-plex-mono/500.css";
+@import "katex/dist/katex.min.css";
 
 @theme {
   --font-serif: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
@@ -351,6 +352,25 @@ mark.text-highlight {
 
 .snippet-body {
   min-width: 0;
+}
+
+.formula-block {
+  margin: 1.5rem 0;
+  overflow: hidden;
+  padding: 0.35rem 0;
+  text-align: center;
+  width: 100%;
+}
+
+.formula-block .katex-display {
+  margin: 0;
+}
+
+.formula-block--fallback {
+  overflow-x: auto;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
 }
 
 .code-block {
