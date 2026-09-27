@@ -1,69 +1,88 @@
-import Image from "next/image";
+import Link from "next/link";
+import { formatPostMeta, postHref } from "@/lib/posts/format";
+import { getFeaturedPost, getLatestPosts } from "@/lib/posts/queries";
+import { homeFontVariables } from "./fonts";
+import { HomeIntroTitle } from "./home-intro-title";
+import "./home.css";
 
-export default function Home() {
+export default async function HomePage() {
+  const featured = await getFeaturedPost();
+  const rail = await getLatestPosts(featured?.id ?? null, 3);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className={`home ${homeFontVariables}`}>
+      <header className="home-header">
+        <p className="home-logo">Snippets</p>
+        <Link className="home-about" href="/about">
+          About
+        </Link>
+      </header>
+
+      <section className="home-intro" aria-label="Introduction">
+        <HomeIntroTitle />
+        <p className="home-intro-deck">
+          Snippets is a personal blog about ideas worth keeping, lessons learned,
+          and practical thoughts on productivity, creativity, and a better way to
+          work.
+        </p>
+      </section>
+
+      <div className="home-split">
+        <section className="home-featured" id="featured" aria-label="Featured">
+          {featured ? (
+            <>
+              <p className="home-kicker">Featured</p>
+              <h2 className="home-featured-title">
+                <Link
+                  className="home-featured-title-link"
+                  href={postHref(featured.slug)}
+                >
+                  {featured.title}
+                </Link>
+              </h2>
+              <p className="home-featured-hook">{featured.description}</p>
+              <div className="home-featured-foot">
+                <p className="home-meta">
+                  {formatPostMeta(featured.published_at)}
+                </p>
+                <Link
+                  className="home-readmore"
+                  href={postHref(featured.slug)}
+                >
+                  Read more →
+                </Link>
+              </div>
+            </>
+          ) : (
+            <p className="home-empty">No published posts yet.</p>
+          )}
+        </section>
+
+        <aside className="home-rail" aria-label="Latest posts">
+          <p className="home-kicker home-rail-kicker">Latest</p>
+          {rail.length > 0 ? (
+            <ul className="home-rail-list">
+              {rail.map((post) => (
+                <li key={post.id}>
+                  <Link
+                    className="home-rail-item"
+                    href={postHref(post.slug)}
+                  >
+                    <span className="home-rail-title">{post.title}</span>
+                    <span className="home-meta">
+                      {formatPostMeta(post.published_at)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="home-empty home-rail-empty">
+              More posts will show up here.
+            </p>
+          )}
+        </aside>
+      </div>
     </div>
   );
 }
