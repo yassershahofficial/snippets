@@ -5,6 +5,7 @@
 export const CMS_BASE = "/cms";
 export const CMS_LOGIN = `${CMS_BASE}/login`;
 export const CMS_AUTH_CALLBACK = `${CMS_BASE}/auth/callback`;
+export const CMS_PROFILE = `${CMS_BASE}/profile`;
 
 export function isCmsPath(pathname: string): boolean {
   return pathname === CMS_BASE || pathname.startsWith(`${CMS_BASE}/`);
