@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireCmsProfile } from "@/lib/cms/auth";
-import { signMediaUrls } from "@/lib/cms/media";
+import { scheduleMediaCleanup, signMediaUrls } from "@/lib/cms/media";
 import { collectMediaIds } from "@/lib/posts/media-refs";
 import { CMS_BASE } from "@/lib/cms/paths";
 import {
@@ -68,6 +68,7 @@ export default async function EditPostPage({ params, searchParams }: Props) {
     ? await Promise.all([
         listNextPostOptions(post.id, post.next_post_id),
         listTagOptions(profile),
+        scheduleMediaCleanup(profile.id),
       ])
     : [[], []];
   const body = parsePostBody(post.body);

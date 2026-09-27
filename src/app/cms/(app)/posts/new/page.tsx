@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireCmsProfile } from "@/lib/cms/auth";
+import { scheduleMediaCleanup } from "@/lib/cms/media";
 import { CMS_BASE } from "@/lib/cms/paths";
 import { EMPTY_POST_VALUES } from "@/lib/cms/post-form";
 import { listNextPostOptions, listTagOptions } from "@/lib/cms/posts";
@@ -14,6 +15,7 @@ export default async function NewPostPage() {
   const [nextPostOptions, tagOptions] = await Promise.all([
     listNextPostOptions(null),
     listTagOptions(profile),
+    scheduleMediaCleanup(profile.id),
   ]);
 
   return (

@@ -284,6 +284,10 @@ export type Database = {
         };
         Returns: string;
       };
+      attach_media: {
+        Args: { target_post: string; media_ids: string[] };
+        Returns: number;
+      };
       decide_appeal: {
         Args: { appeal: string; accept: boolean };
         Returns: undefined;

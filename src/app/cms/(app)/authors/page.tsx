@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/cms/auth";
 import { BAN_REASON_MAX } from "@/lib/cms/appeal-limits";
 import { listAuthors, type AuthorSummary } from "@/lib/cms/authors";
+import { MEDIA_QUOTA_BYTES } from "@/lib/media/limits";
 import { banAuthor, unbanAuthor } from "./actions";
 
 export const metadata: Metadata = { title: "Authors" };
@@ -73,6 +74,10 @@ function AuthorRow({ author }: { author: AuthorSummary }) {
         <span>
           {author.posts} {author.posts === 1 ? "post" : "posts"}, {author.published} published
         </span>
+        <span>
+          {author.images} {author.images === 1 ? "image" : "images"}, {formatMegabytes(author.imageBytes)}
+          {isAdmin ? "" : ` of ${formatMegabytes(MEDIA_QUOTA_BYTES)}`}
+        </span>
         <span>Joined {formatDate(author.created_at)}</span>
       </p>
       {author.ban_reason ? (
@@ -129,4 +134,11 @@ function formatDate(iso: string): string {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function formatMegabytes(bytes: number): string {
+  if (bytes === 0) return "0 MB";
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  const mb = bytes / (1024 * 1024);
+  return `${mb >= 10 ? mb.toFixed(0) : mb.toFixed(1)} MB`;
 }

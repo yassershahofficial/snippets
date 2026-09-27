@@ -132,6 +132,7 @@ export const POST_ERROR_MESSAGES = {
   admin: "Only the admin can do that.",
   owner: "Only the author can edit this post.",
   missing: "This post no longer exists or you can't edit it.",
+  images: "Some images couldn't be made public, so the post wasn't published. Try again.",
   unknown: "Something went wrong. Please try again.",
 } as const;
 

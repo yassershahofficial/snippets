@@ -4,6 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireCmsProfile, type CmsProfile } from "@/lib/cms/auth";
+import {
+  checkBodyMedia,
+  deleteMedia,
+  listPostMedia,
+  publishPostMedia,
+  syncPostMedia,
+  unpublishPostMedia,
+} from "@/lib/cms/media";
 import { CMS_BASE } from "@/lib/cms/paths";
 import { cmsPostPath, getCmsPost, type CmsPost } from "@/lib/cms/posts";
 import {
@@ -26,6 +34,13 @@ export async function createPost(
   const { data, errors } = validatePostForm(values, null);
   if (!data) return { values, errors };
 
+  const mediaError = await checkBodyMedia(data.body, {
+    ownerId: profile.id,
+    postId: null,
+    isAdmin: profile.role === "admin",
+  });
+  if (mediaError) return { values, errors: { body: mediaError } };
+
   const supabase = await createClient();
   const { data: created, error } = await supabase
     .from("posts")
@@ -34,6 +49,7 @@ export async function createPost(
     .single();
 
   if (error) return postErrorState(values, error);
+  await syncPostMedia(created.id, data.body, false);
   redirect(`${cmsPostPath(created.id)}?notice=created`);
 }
 
@@ -51,6 +67,13 @@ export async function updatePost(
   const { data, errors } = validatePostForm(values, id);
   if (!data) return { values, errors };
 
+  const mediaError = await checkBodyMedia(data.body, {
+    ownerId: profile.id,
+    postId: id,
+    isAdmin: profile.role === "admin",
+  });
+  if (mediaError) return { values, errors: { body: mediaError } };
+
   const supabase = await createClient();
   const { data: updated, error } = await supabase
     .from("posts")
@@ -61,6 +84,7 @@ export async function updatePost(
 
   if (error) return postErrorState(values, error);
 
+  await syncPostMedia(id, data.body, updated.status === "published");
   revalidatePath(cmsPostPath(id));
   const sentBack = post.status === "published" && updated.status === "in_review";
   return {
@@ -104,6 +128,7 @@ export async function withdrawToDraft(id: string) {
   const { profile, post } = await loadForAction(id);
   if (post.status === "draft") fail(id, "unknown");
   await setStatus(id, post, "draft");
+  if (post.status === "published") await unpublishPostMedia(post.id);
 
   if (post.author_id !== profile.id) {
     redirect(`${CMS_BASE}?notice=${post.status === "published" ? "unpublished" : "rejected"}`);
@@ -115,6 +140,7 @@ export async function publishPost(id: string) {
   const { profile, post } = await loadForAction(id);
   if (profile.role !== "admin") fail(id, "admin");
   if (post.status === "published") fail(id, "unknown");
+  if (!(await publishPostMedia(post.id, post.body))) fail(id, "images");
   await setStatus(id, post, "published");
   redirect(`${cmsPostPath(id)}?notice=published`);
 }
@@ -143,8 +169,10 @@ export async function setFeatured(id: string, featured: boolean) {
 
 export async function deletePost(id: string) {
   const { post } = await loadForAction(id);
+  const media = await listPostMedia(post.id);
   const supabase = await createClient();
   const { error } = await supabase.from("posts").delete().eq("id", post.id);
   if (error) fail(id, describePostError(error).code);
+  await deleteMedia(media);
   redirect(`${CMS_BASE}?notice=deleted`);
 }
