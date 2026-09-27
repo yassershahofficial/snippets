@@ -46,7 +46,7 @@ export async function listCmsPosts(
   let query = supabase
     .from("posts")
     .select(
-      "id, slug, title, status, featured, updated_at, author_id, author:profiles(username)",
+      "id, slug, title, status, featured, updated_at, author_id, author:profiles!posts_author_id_fkey(username)",
     )
     .order("updated_at", { ascending: false });
 
@@ -74,7 +74,7 @@ export async function getCmsPost(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("posts")
-    .select("*, author:profiles(username)")
+    .select("*, author:profiles!posts_author_id_fkey(username)")
     .eq("id", id)
     .maybeSingle();
 
