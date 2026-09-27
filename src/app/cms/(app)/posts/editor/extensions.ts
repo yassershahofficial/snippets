@@ -1,6 +1,7 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { Blockquote } from "@tiptap/extension-blockquote";
 import { Heading } from "@tiptap/extension-heading";
+import { Link } from "@tiptap/extension-link";
 import { ListItem } from "@tiptap/extension-list";
 import { Placeholder } from "@tiptap/extensions";
 import StarterKit from "@tiptap/starter-kit";
@@ -107,6 +108,15 @@ const PostHeading = Heading.extend({
   },
 }).configure({ levels: [2, 3] });
 
+/** Not inclusive, so typing right after a link doesn't extend it. */
+const PostLink = Link.extend({ inclusive: false }).configure({
+  openOnClick: false,
+  autolink: true,
+  defaultProtocol: "https",
+  isAllowedUri: (url) => isSafeHref(url),
+  HTMLAttributes: { rel: "noopener noreferrer", target: null },
+});
+
 export function postEditorExtensions(placeholder: string) {
   return [
     StarterKit.configure({
@@ -120,14 +130,9 @@ export function postEditorExtensions(placeholder: string) {
       codeBlock: { HTMLAttributes: { class: "post-code" } },
       code: { HTMLAttributes: { class: "post-inline-code" } },
       horizontalRule: { HTMLAttributes: { class: "post-hr" } },
-      link: {
-        openOnClick: false,
-        autolink: true,
-        defaultProtocol: "https",
-        isAllowedUri: (url) => isSafeHref(url),
-        HTMLAttributes: { rel: "noopener noreferrer", target: null },
-      },
+      link: false,
     }),
+    PostLink,
     PostHeading,
     Blockquote.extend({ content: "paragraph+" }).configure({
       HTMLAttributes: { class: "post-quote" },

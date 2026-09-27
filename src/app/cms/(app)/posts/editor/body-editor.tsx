@@ -1,8 +1,9 @@
 "use client";
 
 import "@/app/posts/[slug]/post.css";
+import { getMarkRange } from "@tiptap/core";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CalloutVariant } from "@/lib/posts/body";
 import { CALLOUT_VARIANTS, isSafeHref } from "@/lib/posts/editor-doc";
 import { postEditorExtensions } from "./extensions";
@@ -15,6 +16,15 @@ type Props = {
   describedBy?: string;
   invalid?: boolean;
   onChange?: () => void;
+};
+
+type LinkTarget = {
+  from: number;
+  to: number;
+  /** Text in the range when the link row opened. */
+  text: string;
+  /** False when the range spans more than one block, so only the address can change. */
+  textEditable: boolean;
 };
 
 const PLACEHOLDER = "Write the post. Type ## for a heading, - for a list, > for a quote.";
@@ -115,38 +125,93 @@ function Toolbar({ editor, controls }: { editor: Editor; controls: string }) {
     }),
   });
 
-  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkTarget, setLinkTarget] = useState<LinkTarget | null>(null);
   const [href, setHref] = useState("");
+  const [linkText, setLinkText] = useState("");
   const [linkError, setLinkError] = useState("");
+  const linkOpen = linkTarget !== null;
+
+  useEffect(() => {
+    if (!linkOpen) return;
+    const close = () => setLinkTarget(null);
+    editor.on("update", close);
+    return () => {
+      editor.off("update", close);
+    };
+  }, [editor, linkOpen]);
 
   const chain = () => editor.chain().focus();
 
   function openLink() {
-    setHref(state.link ? (editor.getAttributes("link").href ?? "") : "");
+    const { doc, selection, schema } = editor.state;
+    let { from, to } = selection;
+    let currentHref = "";
+    const linkRange = state.link ? getMarkRange(selection.$from, schema.marks.link) : undefined;
+    if (linkRange && linkRange.from <= from && linkRange.to >= to) {
+      ({ from, to } = linkRange);
+      const mark = doc.nodeAt(from)?.marks.find((m) => m.type === schema.marks.link);
+      currentHref = mark?.attrs.href ?? "";
+    }
+    const $from = doc.resolve(from);
+    const textEditable = $from.parent.isTextblock && $from.sameParent(doc.resolve(to));
+    const text = textEditable ? doc.textBetween(from, to) : "";
+    setLinkTarget({ from, to, text, textEditable });
+    setHref(currentHref);
+    setLinkText(text);
     setLinkError("");
-    setLinkOpen(true);
+  }
+
+  function closeLink() {
+    setLinkTarget(null);
+    editor.commands.focus();
   }
 
   function applyLink() {
+    if (!linkTarget) return;
     let url = href.trim();
     if (url && !/^[a-z][a-z0-9+.-]*:/i.test(url)) url = `https://${url}`;
     if (!isSafeHref(url)) {
       setLinkError("Use a full web address, like https://example.com.");
       return;
     }
-    if (editor.state.selection.empty && !state.link) {
-      chain()
-        .insertContent({ type: "text", text: url, marks: [{ type: "link", attrs: { href: url } }] })
-        .run();
+    const { from, to, text, textEditable } = linkTarget;
+    const newText = linkText.trim() || url;
+    if (!textEditable || (from < to && newText === text)) {
+      chain().setTextSelection({ from, to }).setLink({ href: url }).run();
     } else {
-      chain().extendMarkRange("link").setLink({ href: url }).run();
+      const { doc } = editor.state;
+      const kept = (from < to ? doc.nodeAt(from)?.marks : doc.resolve(from).marks()) ?? [];
+      chain()
+        .insertContentAt(
+          { from, to },
+          {
+            type: "text",
+            text: newText,
+            marks: [
+              ...kept.filter((mark) => mark.type.name !== "link").map((mark) => mark.toJSON()),
+              { type: "link", attrs: { href: url } },
+            ],
+          },
+        )
+        .run();
     }
-    setLinkOpen(false);
+    setLinkTarget(null);
   }
 
   function removeLink() {
-    chain().extendMarkRange("link").unsetLink().run();
-    setLinkOpen(false);
+    if (!linkTarget) return;
+    chain().setTextSelection(linkTarget).extendMarkRange("link").unsetLink().run();
+    setLinkTarget(null);
+  }
+
+  function onLinkKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      applyLink();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      closeLink();
+    }
   }
 
   return (
@@ -235,48 +300,49 @@ function Toolbar({ editor, controls }: { editor: Editor; controls: string }) {
 
       {linkOpen ? (
         <div className="cms-link-row">
-          <label htmlFor={`${controls}-link`}>Link address</label>
-          <input
-            id={`${controls}-link`}
-            type="url"
-            inputMode="url"
-            autoComplete="off"
-            spellCheck={false}
-            placeholder="https://"
-            value={href}
-            autoFocus
-            aria-invalid={linkError ? true : undefined}
-            aria-describedby={linkError ? `${controls}-link-error` : undefined}
-            onChange={(event) => setHref(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                applyLink();
-              } else if (event.key === "Escape") {
-                event.preventDefault();
-                setLinkOpen(false);
-                editor.commands.focus();
-              }
-            }}
-          />
-          <button type="button" className="cms-button cms-button-quiet" onClick={applyLink}>
-            Apply
-          </button>
-          {state.link ? (
-            <button type="button" className="cms-button cms-button-quiet" onClick={removeLink}>
-              Remove link
+          <div className="cms-link-fields">
+            <label htmlFor={`${controls}-link`}>Link address</label>
+            <input
+              id={`${controls}-link`}
+              type="url"
+              inputMode="url"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="https://"
+              value={href}
+              autoFocus
+              aria-invalid={linkError ? true : undefined}
+              aria-describedby={linkError ? `${controls}-link-error` : undefined}
+              onChange={(event) => setHref(event.target.value)}
+              onKeyDown={onLinkKeyDown}
+            />
+            {linkTarget.textEditable ? (
+              <>
+                <label htmlFor={`${controls}-link-text`}>Link text</label>
+                <input
+                  id={`${controls}-link-text`}
+                  autoComplete="off"
+                  placeholder="Leave empty to show the address"
+                  value={linkText}
+                  onChange={(event) => setLinkText(event.target.value)}
+                  onKeyDown={onLinkKeyDown}
+                />
+              </>
+            ) : null}
+          </div>
+          <div className="cms-link-actions">
+            <button type="button" className="cms-button cms-button-quiet" onClick={applyLink}>
+              Apply
             </button>
-          ) : null}
-          <button
-            type="button"
-            className="cms-button cms-button-quiet"
-            onClick={() => {
-              setLinkOpen(false);
-              editor.commands.focus();
-            }}
-          >
-            Cancel
-          </button>
+            {state.link ? (
+              <button type="button" className="cms-button cms-button-quiet" onClick={removeLink}>
+                Remove link
+              </button>
+            ) : null}
+            <button type="button" className="cms-button cms-button-quiet" onClick={closeLink}>
+              Cancel
+            </button>
+          </div>
           {linkError ? (
             <p id={`${controls}-link-error`} className="cms-field-error">
               {linkError}
