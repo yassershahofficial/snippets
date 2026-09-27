@@ -23,7 +23,12 @@ export async function signInWithGoogle(formData: FormData) {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: callback.toString() },
+    options: {
+      redirectTo: callback.toString(),
+      // Google otherwise reuses its signed-in account silently, so signing out
+      // here could never switch accounts.
+      queryParams: { prompt: "select_account" },
+    },
   });
 
   if (error || !data.url) {
