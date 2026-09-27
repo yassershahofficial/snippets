@@ -17,8 +17,6 @@ import {
 } from "@/lib/cms/post-form";
 import type { PostStatus } from "@/lib/supabase/database.types";
 
-const EMPTY_BODY = { type: "doc", content: [] };
-
 export async function createPost(
   _prev: PostFormState,
   formData: FormData,
@@ -31,7 +29,7 @@ export async function createPost(
   const supabase = await createClient();
   const { data: created, error } = await supabase
     .from("posts")
-    .insert({ ...data, author_id: profile.id, status: "draft", body: EMPTY_BODY })
+    .insert({ ...data, author_id: profile.id, status: "draft" })
     .select("id")
     .single();
 

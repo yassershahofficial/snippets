@@ -10,6 +10,7 @@ type Props = {
   defaultValue: string;
   invalid?: boolean;
   describedBy?: string;
+  onChange?: () => void;
 };
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
@@ -34,6 +35,7 @@ export function NextPostPicker({
   defaultValue,
   invalid,
   describedBy,
+  onChange,
 }: Props) {
   const listboxId = useId();
   const listRef = useRef<HTMLUListElement>(null);
@@ -56,6 +58,7 @@ export function NextPostPicker({
   }, [active, open]);
 
   function choose(option: NextPostOption | null) {
+    if ((option?.id ?? "") !== selectedId) onChange?.();
     setSelectedId(option?.id ?? "");
     setQuery(option?.title ?? "");
     setOpen(false);

@@ -133,9 +133,29 @@
   color: #2a2a2a;
 }
 
+.post-ul {
+  list-style: disc;
+}
+
+.post-ol {
+  list-style: decimal;
+}
+
 .post-ul li,
 .post-ol li {
   margin-bottom: 0.4rem;
+}
+
+.post-ul li > .post-p,
+.post-ol li > .post-p {
+  margin-bottom: 0;
+}
+
+.post-ul li > .post-ul,
+.post-ul li > .post-ol,
+.post-ol li > .post-ul,
+.post-ol li > .post-ol {
+  margin: 0.4rem 0 0;
 }
 
 .post-img {

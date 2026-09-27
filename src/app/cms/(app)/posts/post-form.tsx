@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
   LIMITS,
   slugify,
@@ -8,6 +8,7 @@ import {
   type PostFormValues,
 } from "@/lib/cms/post-form";
 import type { NextPostOption, TagOption } from "@/lib/cms/posts";
+import { BodyEditor } from "./editor/body-editor";
 import { NextPostPicker } from "./next-post-picker";
 import { TagPicker } from "./tag-picker";
 
@@ -29,15 +30,52 @@ export function PostForm({
   submitLabel,
   note,
 }: Props) {
-  const [state, formAction, pending] = useActionState(action, {
-    values: initialValues,
-  });
+  const formRef = useRef<HTMLFormElement>(null);
+  const [dirty, setDirty] = useState(false);
+  const markDirty = () => setDirty(true);
+
+  const [state, formAction, pending] = useActionState(
+    async (prev: PostFormState, formData: FormData) => {
+      const result = await action(prev, formData);
+      if (result.ok) setDirty(false);
+      return result;
+    },
+    { values: initialValues },
+  );
   const values = state.values ?? initialValues;
   const errors = state.errors ?? {};
 
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  const failed = !state.ok && Boolean(state.message);
+  const statusText = failed
+    ? state.message
+    : dirty
+      ? "Unsaved changes"
+      : (state.message ?? "");
+
   return (
-    <form action={formAction} className="cms-form" noValidate>
-      <p className="cms-form-legend">Fields marked * are required. A draft only needs a title to save.</p>
+    <form
+      ref={formRef}
+      action={formAction}
+      className="cms-form"
+      noValidate
+      onInput={markDirty}
+      onKeyDown={(event) => {
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
+          event.preventDefault();
+          if (!pending) formRef.current?.requestSubmit();
+        }
+      }}
+    >
+      <p className="cms-form-legend">
+        Fields marked * are required. A draft only needs a title to save.
+      </p>
 
       <Field id="title" label="Title" required error={errors.title}>
         <input
@@ -89,6 +127,25 @@ export function PostForm({
       </Field>
 
       <Field
+        id="body"
+        label="Body"
+        required
+        labelIsText
+        hint="Markdown shortcuts work: ## heading, - list, 1. numbered list, > quote, ``` code block, --- divider."
+        error={errors.body}
+      >
+        <BodyEditor
+          id="body"
+          name="body"
+          defaultValue={values.body}
+          labelledBy="body-label"
+          describedBy={errors.body ? "body-error" : "body-hint"}
+          invalid={Boolean(errors.body)}
+          onChange={markDirty}
+        />
+      </Field>
+
+      <Field
         id="tags"
         label="Tags"
         hint={`Up to ${LIMITS.tags}. Pick an existing tag to keep spellings consistent. Enter adds the highlighted tag, a comma adds exactly what you typed.`}
@@ -101,6 +158,7 @@ export function PostForm({
           defaultValue={values.tags}
           invalid={Boolean(errors.tags)}
           describedBy={errors.tags ? "tags-error" : "tags-hint"}
+          onChange={markDirty}
         />
       </Field>
 
@@ -117,6 +175,7 @@ export function PostForm({
           defaultValue={values.nextPostId}
           invalid={Boolean(errors.nextPostId)}
           describedBy={errors.nextPostId ? "nextPostId-error" : "nextPostId-hint"}
+          onChange={markDirty}
         />
       </Field>
 
@@ -126,12 +185,8 @@ export function PostForm({
         <button type="submit" className="cms-button" disabled={pending}>
           {pending ? "Saving…" : submitLabel}
         </button>
-        <p
-          className={state.ok ? "cms-status-ok" : "cms-status-error"}
-          role="status"
-          aria-live="polite"
-        >
-          {state.message ?? ""}
+        <p className={failed ? "cms-status-error" : "cms-status-ok"} role="status" aria-live="polite">
+          {statusText}
         </p>
       </div>
     </form>
@@ -142,6 +197,7 @@ function Field({
   id,
   label,
   required,
+  labelIsText,
   hint,
   error,
   children,
@@ -149,20 +205,33 @@ function Field({
   id: string;
   label: string;
   required?: boolean;
+  /** For controls that aren't form elements (the rich text editor). */
+  labelIsText?: boolean;
   hint?: string;
   error?: string;
   children: React.ReactNode;
 }) {
+  const text = (
+    <>
+      {label}
+      {required ? (
+        <span className="cms-required" aria-hidden="true">
+          {" "}*
+        </span>
+      ) : null}
+    </>
+  );
   return (
     <div className="cms-field">
-      <label htmlFor={id}>
-        {label}
-        {required ? (
-          <span className="cms-required" aria-hidden="true">
-            {" "}*
-          </span>
-        ) : null}
-      </label>
+      {labelIsText ? (
+        <span id={`${id}-label`} className="cms-field-label">
+          {text}
+        </span>
+      ) : (
+        <label htmlFor={id} className="cms-field-label">
+          {text}
+        </label>
+      )}
       {children}
       {hint ? (
         <p id={`${id}-hint`} className="cms-field-hint">

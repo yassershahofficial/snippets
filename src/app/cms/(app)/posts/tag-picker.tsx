@@ -11,6 +11,7 @@ type Props = {
   defaultValue: string;
   invalid?: boolean;
   describedBy?: string;
+  onChange?: () => void;
 };
 
 type Suggestion = { tag: string; count: number | null };
@@ -56,7 +57,15 @@ function suggest(query: string, options: TagOption[], selected: string[]): Sugge
   return list;
 }
 
-export function TagPicker({ id, name, options, defaultValue, invalid, describedBy }: Props) {
+export function TagPicker({
+  id,
+  name,
+  options,
+  defaultValue,
+  invalid,
+  describedBy,
+  onChange,
+}: Props) {
   const listboxId = useId();
   const [tags, setTags] = useState(() => parseTags(defaultValue));
   const [query, setQuery] = useState("");
@@ -81,10 +90,12 @@ export function TagPicker({ id, name, options, defaultValue, invalid, describedB
     });
     setQuery("");
     setActive(0);
+    onChange?.();
   }
 
   function remove(tag: string) {
     setTags((current) => current.filter((t) => t !== tag));
+    onChange?.();
   }
 
   function onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {

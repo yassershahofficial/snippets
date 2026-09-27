@@ -1,3 +1,8 @@
+import type { PostBody } from "@/lib/posts/body";
+import { bodyToEditorDoc, editorJsonToBody } from "@/lib/posts/editor-doc";
+import { parsePostBody } from "@/lib/posts/parse-body";
+import type { Json } from "@/lib/supabase/database.types";
+
 export const LIMITS = {
   title: 160,
   description: 300,
@@ -14,6 +19,8 @@ export type PostFormValues = {
   description: string;
   tags: string;
   nextPostId: string;
+  /** Editor JSON as a string. */
+  body: string;
 };
 
 export type PostFormErrors = Partial<Record<keyof PostFormValues, string>>;
@@ -31,6 +38,7 @@ export type ValidPost = {
   description: string;
   tags: string[];
   next_post_id: string | null;
+  body: PostBody;
 };
 
 export function slugify(text: string): string {
@@ -65,6 +73,7 @@ export function readPostForm(formData: FormData): PostFormValues {
     description: text("description"),
     tags: text("tags"),
     nextPostId: text("nextPostId"),
+    body: text("body"),
   };
 }
 
@@ -99,7 +108,10 @@ export function validatePostForm(
   if (nextPostId && nextPostId === currentPostId)
     errors.nextPostId = "A post can't point to itself.";
 
-  if (Object.keys(errors).length > 0) return { errors };
+  const body = editorJsonToBody(values.body);
+  if ("error" in body) errors.body = body.error;
+
+  if (Object.keys(errors).length > 0 || "error" in body) return { errors };
 
   return {
     data: {
@@ -108,6 +120,7 @@ export function validatePostForm(
       description,
       tags,
       next_post_id: nextPostId,
+      body: body.body,
     },
   };
 }
@@ -126,6 +139,7 @@ export type PostErrorCode = keyof typeof POST_ERROR_MESSAGES;
 const ERROR_FIELDS: Partial<Record<PostErrorCode, keyof PostFormValues>> = {
   slug: "slug",
   description: "description",
+  body: "body",
 };
 
 /** Maps database rejections to a message code and, when known, a form field. */
@@ -158,6 +172,7 @@ export function postToFormValues(post: {
   description: string;
   tags: string[];
   next_post_id: string | null;
+  body: Json;
 }): PostFormValues {
   return {
     title: post.title,
@@ -165,5 +180,15 @@ export function postToFormValues(post: {
     description: post.description,
     tags: post.tags.join(", "),
     nextPostId: post.next_post_id ?? "",
+    body: JSON.stringify(bodyToEditorDoc(parsePostBody(post.body))),
   };
 }
+
+export const EMPTY_POST_VALUES: PostFormValues = {
+  title: "",
+  slug: "",
+  description: "",
+  tags: "",
+  nextPostId: "",
+  body: JSON.stringify(bodyToEditorDoc(null)),
+};

@@ -16,6 +16,7 @@ import {
   listTagOptions,
 } from "@/lib/cms/posts";
 import { postHref } from "@/lib/posts/format";
+import { countWords } from "@/lib/posts/editor-doc";
 import { parsePostBody } from "@/lib/posts/parse-body";
 import {
   deletePost,
@@ -62,7 +63,7 @@ export default async function EditPostPage({ params, searchParams }: Props) {
   ]);
   const isAdmin = profile.role === "admin";
   const isOwner = post.author_id === profile.id;
-  const blocks = parsePostBody(post.body)?.content.length ?? 0;
+  const words = countWords(parsePostBody(post.body));
 
   const liveEditNote =
     post.status === "published" && !isAdmin
@@ -111,12 +112,8 @@ export default async function EditPostPage({ params, searchParams }: Props) {
               </div>
             ) : null}
             <div>
-              <dt>Body</dt>
-              <dd>
-                {blocks === 0
-                  ? "Empty. The body editor is the next piece of the CMS."
-                  : `${blocks} block${blocks === 1 ? "" : "s"}. Body editing comes with the editor.`}
-              </dd>
+              <dt>Saved body</dt>
+              <dd>{words === 0 ? "Empty" : `${words} ${words === 1 ? "word" : "words"}`}</dd>
             </div>
           </dl>
 
