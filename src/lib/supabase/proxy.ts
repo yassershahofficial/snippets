@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/supabase/database.types";
+import { CMS_LOGIN, isCmsPath, isPublicCmsPath } from "@/lib/cms/paths";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -36,7 +37,27 @@ export async function updateSession(request: NextRequest) {
 
   // Refresh the auth session. Do not place logic between createServerClient
   // and getClaims().
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
 
+  const { pathname, search } = request.nextUrl;
+  if (!isCmsPath(pathname)) {
+    return supabaseResponse;
+  }
+
+  if (!data?.claims && !isPublicCmsPath(pathname)) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = CMS_LOGIN;
+    loginUrl.search = "";
+    loginUrl.searchParams.set("next", `${pathname}${search}`);
+
+    const redirect = NextResponse.redirect(loginUrl);
+    supabaseResponse.cookies
+      .getAll()
+      .forEach((cookie) => redirect.cookies.set(cookie));
+    redirect.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return redirect;
+  }
+
+  supabaseResponse.headers.set("X-Robots-Tag", "noindex, nofollow");
   return supabaseResponse;
 }
