@@ -190,6 +190,54 @@ export type Database = {
           },
         ];
       };
+      media: {
+        Row: {
+          id: string;
+          owner_id: string;
+          post_id: string | null;
+          bytes: number;
+          width: number;
+          height: number;
+          published: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          post_id?: string | null;
+          bytes: number;
+          width: number;
+          height: number;
+          published?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          post_id?: string | null;
+          bytes?: number;
+          width?: number;
+          height?: number;
+          published?: boolean;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "media_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "media_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "posts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       post_thread_reads: {
         Row: {
           post_id: string;
@@ -226,6 +274,15 @@ export type Database = {
       unban_author: {
         Args: { target: string };
         Returns: undefined;
+      };
+      reserve_media: {
+        Args: {
+          target_post: string | null;
+          file_bytes: number;
+          file_width: number;
+          file_height: number;
+        };
+        Returns: string;
       };
       decide_appeal: {
         Args: { appeal: string; accept: boolean };
