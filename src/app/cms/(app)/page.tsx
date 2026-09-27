@@ -23,7 +23,8 @@ const FILTER_LABELS: Record<StatusFilter, string> = {
 
 const NOTICES: Record<string, string> = {
   deleted: "Post deleted.",
-  returned: "Post returned to its author as a draft.",
+  rejected: "Post rejected. It's back with its author as a draft.",
+  unpublished: "Post unpublished. It's back with its author as a draft.",
 };
 
 type Props = {

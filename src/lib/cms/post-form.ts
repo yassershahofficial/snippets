@@ -130,6 +130,7 @@ export const POST_ERROR_MESSAGES = {
   description: "Add a description before submitting or publishing.",
   body: "Add some content to the body before submitting or publishing.",
   admin: "Only the admin can do that.",
+  owner: "Only the author can edit this post.",
   missing: "This post no longer exists or you can't edit it.",
   unknown: "Something went wrong. Please try again.",
 } as const;
@@ -153,6 +154,7 @@ export function describePostError(error: { code?: string; message: string }): {
   else if (msg.includes("posts_description_required")) code = "description";
   else if (msg.includes("posts_body_required")) code = "body";
   else if (msg.includes("Only admins")) code = "admin";
+  else if (msg.includes("other authors' posts")) code = "owner";
   else console.error("post write", error.code, msg);
   return { code, field: ERROR_FIELDS[code] };
 }

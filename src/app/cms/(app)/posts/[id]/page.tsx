@@ -15,9 +15,11 @@ import {
   listNextPostOptions,
   listTagOptions,
 } from "@/lib/cms/posts";
-import { postHref } from "@/lib/posts/format";
+import { formatPostMeta, postHref } from "@/lib/posts/format";
 import { countWords } from "@/lib/posts/editor-doc";
 import { parsePostBody } from "@/lib/posts/parse-body";
+import { PostBodyView } from "@/lib/posts/render";
+import "@/app/posts/[slug]/post.css";
 import {
   deletePost,
   publishPost,
@@ -57,13 +59,17 @@ export default async function EditPostPage({ params, searchParams }: Props) {
       ? POST_ERROR_MESSAGES[query.error as PostErrorCode]
       : null;
 
-  const [nextPostOptions, tagOptions] = await Promise.all([
-    listNextPostOptions(post.id, post.next_post_id),
-    listTagOptions(profile),
-  ]);
   const isAdmin = profile.role === "admin";
   const isOwner = post.author_id === profile.id;
-  const words = countWords(parsePostBody(post.body));
+  const [nextPostOptions, tagOptions] = isOwner
+    ? await Promise.all([
+        listNextPostOptions(post.id, post.next_post_id),
+        listTagOptions(profile),
+      ])
+    : [[], []];
+  const body = parsePostBody(post.body);
+  const words = countWords(body);
+  const authorName = post.author?.username ?? "the author";
 
   const liveEditNote =
     post.status === "published" && !isAdmin
@@ -81,14 +87,39 @@ export default async function EditPostPage({ params, searchParams }: Props) {
       {error ? <p className="cms-notice" role="alert">{error}</p> : null}
 
       <div className="cms-editor">
-        <PostForm
-          action={updatePost.bind(null, post.id)}
-          initialValues={postToFormValues(post)}
-          nextPostOptions={nextPostOptions}
-          tagOptions={tagOptions}
-          submitLabel="Save changes"
-          note={liveEditNote}
-        />
+        {isOwner ? (
+          <PostForm
+            action={updatePost.bind(null, post.id)}
+            initialValues={postToFormValues(post)}
+            nextPostOptions={nextPostOptions}
+            tagOptions={tagOptions}
+            submitLabel="Save changes"
+            note={liveEditNote}
+          />
+        ) : (
+          <div className="cms-review">
+            <p className="cms-review-note">
+              You&apos;re reviewing {authorName}&apos;s post. Only the author can change its
+              words.
+            </p>
+            <article className="post cms-review-post">
+              {post.description ? (
+                <p className="post-description">{post.description}</p>
+              ) : null}
+              {post.published_at ? (
+                <p className="post-meta">{formatPostMeta(post.published_at)}</p>
+              ) : null}
+              {post.tags.length > 0 ? (
+                <p className="post-meta">Tags: {post.tags.join(", ")}</p>
+              ) : null}
+              {body && body.content.length > 0 ? (
+                <PostBodyView body={body} skipTitleDescription />
+              ) : (
+                <p className="post-empty">This post has no content yet.</p>
+              )}
+            </article>
+          </div>
+        )}
 
         <aside className="cms-panel" aria-label="Post status">
           <dl className="cms-panel-facts">
@@ -127,7 +158,7 @@ export default async function EditPostPage({ params, searchParams }: Props) {
               </Link>
             ) : null}
 
-            {post.status === "draft" ? (
+            {isOwner && post.status === "draft" ? (
               <form action={submitForReview.bind(null, post.id)}>
                 <button type="submit" className="cms-button">
                   Submit for review
@@ -158,7 +189,7 @@ export default async function EditPostPage({ params, searchParams }: Props) {
                     ? "Unpublish"
                     : isOwner
                       ? "Withdraw to draft"
-                      : "Return to author"}
+                      : "Reject"}
                 </button>
               </form>
             ) : null}

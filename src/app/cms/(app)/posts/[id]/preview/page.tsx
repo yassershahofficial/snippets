@@ -28,7 +28,9 @@ export default async function PreviewPostPage({ params }: Props) {
       <p className="cms-preview-bar">
         Preview of a {STATUS_LABELS[post.status].toLowerCase()} post
         {post.status === "published" ? "" : ". Readers can't see it yet"}.{" "}
-        <Link href={cmsPostPath(post.id)}>Back to editing</Link>
+        <Link href={cmsPostPath(post.id)}>
+          {post.author_id === profile.id ? "Back to editing" : "Back to review"}
+        </Link>
       </p>
       <article className="post">
         <header className="post-header">

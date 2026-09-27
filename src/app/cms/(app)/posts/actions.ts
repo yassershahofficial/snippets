@@ -46,6 +46,7 @@ export async function updatePost(
   const values = readPostForm(formData);
   const post = await getCmsPost(profile, id);
   if (!post) return { values, message: POST_ERROR_MESSAGES.missing };
+  if (post.author_id !== profile.id) return { values, message: POST_ERROR_MESSAGES.owner };
 
   const { data, errors } = validatePostForm(values, id);
   if (!data) return { values, errors };
@@ -92,7 +93,8 @@ async function setStatus(id: string, post: CmsPost, status: PostStatus) {
 }
 
 export async function submitForReview(id: string) {
-  const { post } = await loadForAction(id);
+  const { profile, post } = await loadForAction(id);
+  if (post.author_id !== profile.id) fail(id, "owner");
   if (post.status !== "draft") fail(id, "unknown");
   await setStatus(id, post, "in_review");
   redirect(`${cmsPostPath(id)}?notice=submitted`);
@@ -104,7 +106,7 @@ export async function withdrawToDraft(id: string) {
   await setStatus(id, post, "draft");
 
   if (post.author_id !== profile.id) {
-    redirect(`${CMS_BASE}?notice=returned`);
+    redirect(`${CMS_BASE}?notice=${post.status === "published" ? "unpublished" : "rejected"}`);
   }
   redirect(`${cmsPostPath(id)}?notice=draft`);
 }
