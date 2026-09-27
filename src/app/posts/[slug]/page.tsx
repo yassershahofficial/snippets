@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { parsePostBody } from "@/lib/posts/parse-body";
-import { getPublishedPostBySlug } from "@/lib/posts/queries";
+import { getNextPost, getPublishedPostBySlug } from "@/lib/posts/queries";
 import { PostBodyView } from "@/lib/posts/render";
 import "./post.css";
 
@@ -40,6 +40,7 @@ export default async function PostPage({ params }: Props) {
 
   const body = parsePostBody(post.body);
   const published = formatPublishedAt(post.published_at);
+  const next = await getNextPost(post);
 
   return (
     <main className="post">
@@ -58,6 +59,20 @@ export default async function PostPage({ params }: Props) {
       ) : (
         <p className="post-empty">This post has no content yet.</p>
       )}
+
+      {next ? (
+        <nav className="post-next" aria-labelledby="post-next-label">
+          <p id="post-next-label" className="post-next-label">
+            Read next
+          </p>
+          <Link href={`/posts/${next.slug}`} className="post-next-link">
+            <span className="post-next-title">{next.title}</span>
+            {next.description ? (
+              <span className="post-next-description">{next.description}</span>
+            ) : null}
+          </Link>
+        </nav>
+      ) : null}
 
       <p className="post-back">
         <Link href="/">← Back home</Link>

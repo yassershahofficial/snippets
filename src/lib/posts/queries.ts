@@ -30,6 +30,25 @@ export async function getPublishedPostBySlug(
   return data;
 }
 
+/** The post the author picked as "read next", if it is published. */
+export async function getNextPost(post: PostRow): Promise<PostListItem | null> {
+  if (!post.next_post_id || post.next_post_id === post.id) return null;
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select(LIST_COLUMNS)
+    .eq("id", post.next_post_id)
+    .eq("status", "published")
+    .maybeSingle();
+
+  if (error) {
+    console.error("getNextPost", error.message);
+    return null;
+  }
+
+  return data;
+}
+
 /** Featured published post, or newest published if none marked featured. */
 export async function getFeaturedPost(): Promise<PostListItem | null> {
   const supabase = await createClient();
