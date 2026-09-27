@@ -20,6 +20,10 @@ type Props = {
   submitLabel: string;
   /** Shown above the submit button, e.g. the live-post warning. */
   note?: string;
+  /** Missing on a new post. */
+  postId?: string;
+  /** Signed URLs for images already in the body. */
+  mediaUrls?: Record<string, string>;
 };
 
 export function PostForm({
@@ -29,6 +33,8 @@ export function PostForm({
   tagOptions,
   submitLabel,
   note,
+  postId,
+  mediaUrls,
 }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const [dirty, setDirty] = useState(false);
@@ -142,6 +148,8 @@ export function PostForm({
           describedBy={errors.body ? "body-error" : "body-hint"}
           invalid={Boolean(errors.body)}
           onChange={markDirty}
+          postId={postId}
+          mediaUrls={mediaUrls}
         />
       </Field>
 

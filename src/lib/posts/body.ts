@@ -70,13 +70,29 @@ export type OrderedListNode = {
   content?: ListItemNode[];
 };
 
+export type ImageSize = "full" | "medium" | "small";
+
+export type ImageRatio = "original" | "16:9" | "4:3" | "1:1" | "3:4";
+
+/** Visible part of the stored image, as fractions (0 to 1) of its width and height. */
+export type ImageCrop = { x: number; y: number; w: number; h: number };
+
+/**
+ * An uploaded image. The stored file is never cropped; crop is applied when
+ * shown, so the shape can change later without uploading again.
+ */
 export type ImageNode = {
   type: "image";
   attrs: {
-    src: string;
-    width?: number;
-    height?: number;
-    aspectRatio?: string;
+    media: string;
+    width: number;
+    height: number;
+    size: ImageSize;
+    ratio: ImageRatio;
+    crop: ImageCrop | null;
+    alt: string;
+    decorative: boolean;
+    caption: string;
   };
 };
 

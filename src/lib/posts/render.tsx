@@ -1,4 +1,6 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
+import { publicMediaUrl } from "@/lib/media/limits";
+import { PostFigure } from "@/lib/posts/figure";
 import type {
   Block,
   BlockquoteNode,
@@ -21,6 +23,7 @@ import type {
 type RenderOptions = {
   /** When true, title/description blocks are omitted (page shows columns). */
   skipTitleDescription?: boolean;
+  mediaUrl?: (id: string) => string | null;
 };
 
 function safeHref(href: string): string | null {
@@ -173,27 +176,12 @@ function renderOrderedList(node: OrderedListNode, key: string): ReactNode {
   );
 }
 
-function renderImage(node: ImageNode, key: string): ReactNode {
-  const src = safeHref(node.attrs.src);
+function renderImage(node: ImageNode, key: string, options: RenderOptions): ReactNode {
+  const attrs = node.attrs;
+  if (typeof attrs?.media !== "string" || !(attrs.width > 0) || !(attrs.height > 0)) return null;
+  const src = options.mediaUrl ? options.mediaUrl(attrs.media) : publicMediaUrl(attrs.media);
   if (!src) return null;
-
-  const style: CSSProperties = {};
-  if (node.attrs.width != null) style.width = node.attrs.width;
-  if (node.attrs.height != null) style.height = node.attrs.height;
-  if (node.attrs.aspectRatio) style.aspectRatio = node.attrs.aspectRatio;
-
-  return (
-    // Author-supplied image URLs; optional sizing via body attrs.
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      key={key}
-      className="post-img"
-      src={src}
-      alt=""
-      style={Object.keys(style).length ? style : undefined}
-      loading="lazy"
-    />
-  );
+  return <PostFigure key={key} attrs={attrs} src={src} />;
 }
 
 function renderCallout(node: CalloutNode, key: string): ReactNode {
@@ -230,7 +218,7 @@ function renderBlock(block: Block, key: string, options: RenderOptions): ReactNo
     case "ordered_list":
       return renderOrderedList(block, key);
     case "image":
-      return renderImage(block, key);
+      return renderImage(block, key, options);
     case "callout":
       return renderCallout(block, key);
     default:
@@ -241,14 +229,18 @@ function renderBlock(block: Block, key: string, options: RenderOptions): ReactNo
 export function PostBodyView({
   body,
   skipTitleDescription = true,
+  mediaUrls,
 }: {
   body: PostBody;
   skipTitleDescription?: boolean;
+  /** Signed URLs for private images (CMS preview and review). Public copies are used otherwise. */
+  mediaUrls?: Record<string, string>;
 }) {
+  const mediaUrl = mediaUrls ? (id: string) => mediaUrls[id] ?? null : undefined;
   return (
     <div className="post-body">
       {body.content.map((block, i) =>
-        renderBlock(block, `b${i}`, { skipTitleDescription }),
+        renderBlock(block, `b${i}`, { skipTitleDescription, mediaUrl }),
       )}
     </div>
   );

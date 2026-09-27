@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireCmsProfile } from "@/lib/cms/auth";
+import { signMediaUrls } from "@/lib/cms/media";
+import { collectMediaIds } from "@/lib/posts/media-refs";
 import { CMS_BASE } from "@/lib/cms/paths";
 import {
   POST_ERROR_MESSAGES,
@@ -69,6 +71,7 @@ export default async function EditPostPage({ params, searchParams }: Props) {
       ])
     : [[], []];
   const body = parsePostBody(post.body);
+  const mediaUrls = await signMediaUrls(collectMediaIds(post.body));
   const words = countWords(body);
   const authorName = post.author?.username ?? "the author";
   const showThread = post.status !== "published" && !(isAdmin && isOwner);
@@ -97,6 +100,8 @@ export default async function EditPostPage({ params, searchParams }: Props) {
             tagOptions={tagOptions}
             submitLabel="Save changes"
             note={liveEditNote}
+            postId={post.id}
+            mediaUrls={mediaUrls}
           />
         ) : (
           <div className="cms-review">
@@ -115,7 +120,7 @@ export default async function EditPostPage({ params, searchParams }: Props) {
                 <p className="post-meta">Tags: {post.tags.join(", ")}</p>
               ) : null}
               {body && body.content.length > 0 ? (
-                <PostBodyView body={body} skipTitleDescription />
+                <PostBodyView body={body} skipTitleDescription mediaUrls={mediaUrls} />
               ) : (
                 <p className="post-empty">This post has no content yet.</p>
               )}

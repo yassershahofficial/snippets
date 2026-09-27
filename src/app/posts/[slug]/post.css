@@ -158,11 +158,50 @@
   margin: 0.4rem 0 0;
 }
 
+.post-figure {
+  margin: 1.75rem auto;
+}
+
+.post-figure-medium {
+  width: 75%;
+}
+
+.post-figure-small {
+  width: 50%;
+}
+
+@media (max-width: 640px) {
+  .post-figure-medium,
+  .post-figure-small {
+    width: 100%;
+  }
+}
+
 .post-img {
   display: block;
-  max-width: 100%;
+  width: 100%;
   height: auto;
-  margin: 1.5rem 0;
+  background: #e8e8e8;
+}
+
+.post-figure-frame {
+  position: relative;
+  overflow: hidden;
+  background: #e8e8e8;
+}
+
+.post-figure-frame img {
+  position: absolute;
+  max-width: none;
+  display: block;
+}
+
+.post-figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #5a5a5a;
+  text-align: center;
 }
 
 .post-callout {

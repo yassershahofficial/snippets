@@ -4,9 +4,11 @@ import { Heading } from "@tiptap/extension-heading";
 import { Link } from "@tiptap/extension-link";
 import { ListItem } from "@tiptap/extension-list";
 import { Placeholder } from "@tiptap/extensions";
+import { ReactNodeViewRenderer } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import type { CalloutVariant } from "@/lib/posts/body";
 import { CALLOUT_VARIANTS, isSafeHref } from "@/lib/posts/editor-doc";
+import { ImageView } from "./image-view";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -66,8 +68,8 @@ const Callout = Node.create({
 });
 
 /**
- * Keeps images already in a body. Nothing is parsed from pasted HTML, so
- * images from other sites can't sneak in; uploads come with the media bucket.
+ * Uploaded images only. Nothing is parsed from pasted or dropped HTML, so
+ * the Image button is the one way in.
  */
 const Image = Node.create({
   name: "image",
@@ -77,14 +79,15 @@ const Image = Node.create({
 
   addAttributes() {
     return {
-      src: { default: null },
-      width: { default: null },
-      height: { default: null },
-      aspectRatio: {
-        default: null,
-        renderHTML: (attrs) =>
-          attrs.aspectRatio ? { style: `aspect-ratio: ${attrs.aspectRatio}` } : {},
-      },
+      media: { default: null, rendered: false },
+      width: { default: null, rendered: false },
+      height: { default: null, rendered: false },
+      size: { default: "full", rendered: false },
+      ratio: { default: "original", rendered: false },
+      crop: { default: null, rendered: false },
+      alt: { default: "", rendered: false },
+      decorative: { default: false, rendered: false },
+      caption: { default: "", rendered: false },
     };
   },
 
@@ -92,8 +95,12 @@ const Image = Node.create({
     return [];
   },
 
-  renderHTML({ HTMLAttributes }) {
-    return ["img", mergeAttributes(HTMLAttributes, { class: "post-img", alt: "" })];
+  renderHTML({ node }) {
+    return ["figure", { class: "post-figure", "data-media": node.attrs.media }];
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(ImageView);
   },
 });
 

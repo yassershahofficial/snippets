@@ -3,6 +3,10 @@ import type {
   BulletListNode,
   CalloutVariant,
   HeadingLevel,
+  ImageCrop,
+  ImageNode,
+  ImageRatio,
+  ImageSize,
   ListItemNode,
   Mark,
   OrderedListNode,
@@ -10,6 +14,8 @@ import type {
   PostBody,
   TextNode,
 } from "./body";
+import { IMAGE_RATIOS, IMAGE_SIZES, IMAGE_TEXT_MAX, MIN_CROP, ratioValue } from "./image";
+import { MEDIA_MAX_HEIGHT, MEDIA_MAX_WIDTH } from "@/lib/media/limits";
 
 /**
  * Converts between the stored post body (snake_case AST in body.ts) and the
@@ -131,7 +137,10 @@ export function bodyToEditorDoc(body: PostBody | null): EditorNode {
   const content = (body?.content ?? [])
     .map(blockToEditor)
     .filter((n): n is EditorNode => n !== null);
-  return { type: "doc", content: content.length ? content : [{ type: "paragraph" }] };
+  // The editor keeps an empty paragraph at the end; adding it up front stops
+  // the first click from counting as an unsaved change. Saving trims it.
+  if (content.at(-1)?.type !== "paragraph") content.push({ type: "paragraph" });
+  return { type: "doc", content };
 }
 
 // Editor to stored body -----------------------------------------------------------
@@ -223,12 +232,58 @@ function readList(node: Record<string, unknown>, ctx: Context, depth: number): B
     : { type: "ordered_list", content: items };
 }
 
-function readPositiveNumber(value: unknown): number | undefined {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0 || value > 10_000) {
-    reject("An image has an invalid size.");
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function readDimension(value: unknown, max: number): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > max) {
+    reject("An image has an invalid size. Upload it again.");
   }
-  return Math.round(value);
+  return value;
+}
+
+function readImageText(value: unknown, what: string): string {
+  if (value === undefined || value === null) return "";
+  if (typeof value !== "string") reject("The body is malformed.");
+  const text = value.replace(/\s+/g, " ").trim();
+  if (text.length > IMAGE_TEXT_MAX) reject(`Image ${what} can be at most ${IMAGE_TEXT_MAX} characters.`);
+  return text;
+}
+
+function readCrop(value: unknown, width: number, height: number, ratio: number): ImageCrop {
+  if (!isRecord(value)) reject("An image crop is missing. Edit the image and pick its shape again.");
+  const parts = [value.x, value.y, value.w, value.h];
+  if (!parts.every((n) => typeof n === "number" && Number.isFinite(n))) reject("An image crop is invalid.");
+  const [x, y, w, h] = parts as number[];
+  const edge = 0.001;
+  if (x < 0 || y < 0 || w < MIN_CROP - edge || h < MIN_CROP - edge || x + w > 1 + edge || y + h > 1 + edge) {
+    reject("An image crop is outside the image.");
+  }
+  const shape = (w * width) / (h * height);
+  if (Math.abs(shape - ratio) / ratio > 0.02) reject("An image crop doesn't match its shape.");
+  return { x, y, w, h };
+}
+
+function readImage(node: Record<string, unknown>): ImageNode {
+  const attrs = isRecord(node.attrs) ? node.attrs : {};
+  if (typeof attrs.media !== "string" || !UUID.test(attrs.media)) {
+    reject("An image is missing its upload. Remove it and add it again.");
+  }
+  const width = readDimension(attrs.width, MEDIA_MAX_WIDTH);
+  const height = readDimension(attrs.height, MEDIA_MAX_HEIGHT);
+  const size = IMAGE_SIZES.includes(attrs.size as ImageSize) ? (attrs.size as ImageSize) : reject("An image has an unknown size.");
+  const ratio = IMAGE_RATIOS.includes(attrs.ratio as ImageRatio)
+    ? (attrs.ratio as ImageRatio)
+    : reject("An image has an unknown shape.");
+  const value = ratioValue(ratio);
+  const crop = value === null ? null : readCrop(attrs.crop, width, height, value);
+  const decorative = attrs.decorative === true;
+  const alt = decorative ? "" : readImageText(attrs.alt, "alt text");
+  if (!decorative && !alt) reject("Every image needs alt text, or mark it as decorative.");
+  const caption = readImageText(attrs.caption, "captions");
+  return {
+    type: "image",
+    attrs: { media: attrs.media.toLowerCase(), width, height, size, ratio, crop, alt, decorative, caption },
+  };
 }
 
 function readBlock(node: Record<string, unknown>, ctx: Context): Block {
@@ -252,25 +307,8 @@ function readBlock(node: Record<string, unknown>, ctx: Context): Block {
     case "bulletList":
     case "orderedList":
       return readList(node, ctx, 1);
-    case "image": {
-      const attrs = isRecord(node.attrs) ? node.attrs : {};
-      if (!isSafeHref(attrs.src)) reject("Images must use a full web address starting with http:// or https://.");
-      const width = readPositiveNumber(attrs.width);
-      const height = readPositiveNumber(attrs.height);
-      const ratio = attrs.aspectRatio;
-      if (ratio !== undefined && ratio !== null && (typeof ratio !== "string" || !/^\d{1,5}(\.\d{1,3})? ?\/ ?\d{1,5}(\.\d{1,3})?$/.test(ratio))) {
-        reject("An image has an invalid aspect ratio.");
-      }
-      return {
-        type: "image",
-        attrs: {
-          src: attrs.src,
-          ...(width ? { width } : {}),
-          ...(height ? { height } : {}),
-          ...(typeof ratio === "string" ? { aspectRatio: ratio } : {}),
-        },
-      };
-    }
+    case "image":
+      return readImage(node);
     case "callout": {
       const variant = isRecord(node.attrs) ? node.attrs.variant : undefined;
       if (!CALLOUT_VARIANTS.includes(variant as CalloutVariant)) reject("A callout has an unknown style.");

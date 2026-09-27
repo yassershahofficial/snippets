@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireCmsProfile } from "@/lib/cms/auth";
+import { signMediaUrls } from "@/lib/cms/media";
+import { collectMediaIds } from "@/lib/posts/media-refs";
 import { STATUS_LABELS, cmsPostPath, getCmsPost } from "@/lib/cms/posts";
 import { formatPostMeta } from "@/lib/posts/format";
 import { parsePostBody } from "@/lib/posts/parse-body";
@@ -21,6 +23,7 @@ export default async function PreviewPostPage({ params }: Props) {
   if (!post) notFound();
 
   const body = parsePostBody(post.body);
+  const mediaUrls = await signMediaUrls(collectMediaIds(post.body));
   const published = formatPostMeta(post.published_at);
 
   return (
@@ -42,7 +45,7 @@ export default async function PreviewPostPage({ params }: Props) {
         </header>
 
         {body && body.content.length > 0 ? (
-          <PostBodyView body={body} skipTitleDescription />
+          <PostBodyView body={body} skipTitleDescription mediaUrls={mediaUrls} />
         ) : (
           <p className="post-empty">This post has no content yet.</p>
         )}

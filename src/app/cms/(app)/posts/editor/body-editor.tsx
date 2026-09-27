@@ -2,11 +2,14 @@
 
 import "@/app/posts/[slug]/post.css";
 import { getMarkRange } from "@tiptap/core";
+import { NodeSelection } from "@tiptap/pm/state";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { CalloutVariant } from "@/lib/posts/body";
 import { CALLOUT_VARIANTS, isSafeHref } from "@/lib/posts/editor-doc";
 import { postEditorExtensions } from "./extensions";
+import { ImagePanel, type ImageAttrs, type ImageTarget } from "./image-panel";
+import { MediaContext } from "./media-context";
 
 type Props = {
   id: string;
@@ -16,6 +19,10 @@ type Props = {
   describedBy?: string;
   invalid?: boolean;
   onChange?: () => void;
+  /** Missing on a new post: uploads stay temporary until the draft is created. */
+  postId?: string;
+  /** Signed URLs for images already in the body. */
+  mediaUrls?: Record<string, string>;
 };
 
 type LinkTarget = {
@@ -44,9 +51,13 @@ export function BodyEditor({
   describedBy,
   invalid,
   onChange,
+  postId,
+  mediaUrls,
 }: Props) {
   const [initialContent] = useState(() => JSON.parse(defaultValue));
   const [json, setJson] = useState(defaultValue);
+  const [urls, setUrls] = useState<Record<string, string>>(() => mediaUrls ?? {});
+  const [imageTarget, setImageTarget] = useState<ImageTarget | null>(null);
 
   const editor = useEditor({
     extensions: postEditorExtensions(PLACEHOLDER),
@@ -69,15 +80,74 @@ export function BodyEditor({
     },
   });
 
+  const editingPos = imageTarget?.pos ?? null;
+  useEffect(() => {
+    if (!editor || editingPos === null) return;
+    const close = () => setImageTarget(null);
+    editor.on("update", close);
+    return () => {
+      editor.off("update", close);
+    };
+  }, [editor, editingPos]);
+
+  const media = useMemo(
+    () => ({
+      urls,
+      editImage: () => {
+        if (!editor) return;
+        const { selection } = editor.state;
+        if (selection instanceof NodeSelection && selection.node.type.name === "image") {
+          setImageTarget({ pos: selection.from, attrs: selection.node.attrs as ImageAttrs });
+        }
+      },
+    }),
+    [editor, urls],
+  );
+
+  function openImage() {
+    if (!editor) return;
+    const { selection } = editor.state;
+    if (selection instanceof NodeSelection && selection.node.type.name === "image") {
+      setImageTarget({ pos: selection.from, attrs: selection.node.attrs as ImageAttrs });
+    } else {
+      setImageTarget({ pos: null, attrs: null });
+    }
+  }
+
+  function closeImage() {
+    setImageTarget(null);
+    editor?.commands.focus();
+  }
+
   return (
     <div className="cms-body-editor" data-invalid={invalid ? "" : undefined}>
       <input type="hidden" name={name} value={json} />
       {editor ? (
-        <>
-          <Toolbar editor={editor} controls={id} />
+        <MediaContext.Provider value={media}>
+          <Toolbar
+            editor={editor}
+            controls={id}
+            imageOpen={imageTarget !== null}
+            onImage={openImage}
+            onCloseImage={() => setImageTarget(null)}
+            panel={
+              imageTarget ? (
+                <ImagePanel
+                  key={`${imageTarget.pos ?? "new"}-${imageTarget.attrs?.media ?? ""}`}
+                  editor={editor}
+                  idPrefix={id}
+                  postId={postId}
+                  target={imageTarget}
+                  urls={urls}
+                  onUploaded={(mediaId, url) => setUrls((current) => ({ ...current, [mediaId]: url }))}
+                  onClose={closeImage}
+                />
+              ) : null
+            }
+          />
           <EditorContent editor={editor} />
           <WordCount editor={editor} />
-        </>
+        </MediaContext.Provider>
       ) : (
         <div className="cms-body-loading" aria-hidden="true" />
       )}
@@ -99,10 +169,25 @@ function WordCount({ editor }: { editor: Editor }) {
   );
 }
 
-function Toolbar({ editor, controls }: { editor: Editor; controls: string }) {
+function Toolbar({
+  editor,
+  controls,
+  imageOpen,
+  onImage,
+  onCloseImage,
+  panel,
+}: {
+  editor: Editor;
+  controls: string;
+  imageOpen: boolean;
+  onImage: () => void;
+  onCloseImage: () => void;
+  panel: ReactNode;
+}) {
   const state = useEditorState({
     editor,
     selector: ({ editor: e }) => ({
+      image: e.isActive("image"),
       block: e.isActive("heading", { level: 2 })
         ? "h2"
         : e.isActive("heading", { level: 3 })
@@ -129,7 +214,7 @@ function Toolbar({ editor, controls }: { editor: Editor; controls: string }) {
   const [href, setHref] = useState("");
   const [linkText, setLinkText] = useState("");
   const [linkError, setLinkError] = useState("");
-  const linkOpen = linkTarget !== null;
+  const linkOpen = linkTarget !== null && !imageOpen;
 
   useEffect(() => {
     if (!linkOpen) return;
@@ -143,6 +228,7 @@ function Toolbar({ editor, controls }: { editor: Editor; controls: string }) {
   const chain = () => editor.chain().focus();
 
   function openLink() {
+    onCloseImage();
     const { doc, selection, schema } = editor.state;
     let { from, to } = selection;
     let currentHref = "";
@@ -286,6 +372,17 @@ function Toolbar({ editor, controls }: { editor: Editor; controls: string }) {
           <ToolButton label="Divider" onClick={() => chain().setHorizontalRule().run()}>
             Divider
           </ToolButton>
+          <ToolButton
+            label={state.image ? "Edit image" : "Image"}
+            pressed={imageOpen}
+            onClick={() => {
+              setLinkTarget(null);
+              if (imageOpen) onCloseImage();
+              else onImage();
+            }}
+          >
+            Image
+          </ToolButton>
         </span>
 
         <span className="cms-toolbar-group">
@@ -350,6 +447,7 @@ function Toolbar({ editor, controls }: { editor: Editor; controls: string }) {
           ) : null}
         </div>
       ) : null}
+      {panel}
     </div>
   );
 }
