@@ -10,6 +10,10 @@ export type PostStatus = "draft" | "in_review" | "published";
 
 export type ProfileRole = "admin" | "author";
 
+export type AppealStatus = "pending" | "accepted" | "rejected";
+
+export type BanContentAction = "hide" | "unpublish" | "delete";
+
 export type Database = {
   snippets: {
     Tables: {
@@ -85,6 +89,8 @@ export type Database = {
           role: ProfileRole;
           created_at: string;
           updated_at: string;
+          banned_at: string | null;
+          ban_reason: string | null;
         };
         Insert: {
           id: string;
@@ -94,6 +100,8 @@ export type Database = {
           role?: ProfileRole;
           created_at?: string;
           updated_at?: string;
+          banned_at?: string | null;
+          ban_reason?: string | null;
         };
         Update: {
           id?: string;
@@ -103,8 +111,45 @@ export type Database = {
           role?: ProfileRole;
           created_at?: string;
           updated_at?: string;
+          banned_at?: string | null;
+          ban_reason?: string | null;
         };
         Relationships: [];
+      };
+      appeals: {
+        Row: {
+          id: string;
+          user_id: string;
+          message: string;
+          status: AppealStatus;
+          created_at: string;
+          decided_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          message: string;
+          status?: AppealStatus;
+          created_at?: string;
+          decided_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          message?: string;
+          status?: AppealStatus;
+          created_at?: string;
+          decided_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "appeals_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       post_messages: {
         Row: {
@@ -173,6 +218,18 @@ export type Database = {
       unread_thread_posts: {
         Args: Record<string, never>;
         Returns: string[];
+      };
+      ban_author: {
+        Args: { target: string; reason?: string | null; content_action?: BanContentAction };
+        Returns: undefined;
+      };
+      unban_author: {
+        Args: { target: string };
+        Returns: undefined;
+      };
+      decide_appeal: {
+        Args: { appeal: string; accept: boolean };
+        Returns: undefined;
       };
       sync_profile: {
         Args: Record<string, never>;
