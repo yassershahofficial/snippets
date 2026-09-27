@@ -13,6 +13,7 @@ import {
   cmsPostPath,
   getCmsPost,
   listNextPostOptions,
+  listTagOptions,
 } from "@/lib/cms/posts";
 import { postHref } from "@/lib/posts/format";
 import { parsePostBody } from "@/lib/posts/parse-body";
@@ -55,7 +56,10 @@ export default async function EditPostPage({ params, searchParams }: Props) {
       ? POST_ERROR_MESSAGES[query.error as PostErrorCode]
       : null;
 
-  const nextPostOptions = await listNextPostOptions(post.id, post.next_post_id);
+  const [nextPostOptions, tagOptions] = await Promise.all([
+    listNextPostOptions(post.id, post.next_post_id),
+    listTagOptions(profile),
+  ]);
   const isAdmin = profile.role === "admin";
   const isOwner = post.author_id === profile.id;
   const blocks = parsePostBody(post.body)?.content.length ?? 0;
@@ -80,6 +84,7 @@ export default async function EditPostPage({ params, searchParams }: Props) {
           action={updatePost.bind(null, post.id)}
           initialValues={postToFormValues(post)}
           nextPostOptions={nextPostOptions}
+          tagOptions={tagOptions}
           submitLabel="Save changes"
           note={liveEditNote}
         />

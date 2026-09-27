@@ -2,15 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireCmsProfile } from "@/lib/cms/auth";
 import { CMS_BASE } from "@/lib/cms/paths";
-import { listNextPostOptions } from "@/lib/cms/posts";
+import { listNextPostOptions, listTagOptions } from "@/lib/cms/posts";
 import { createPost } from "../actions";
 import { PostForm } from "../post-form";
 
 export const metadata: Metadata = { title: "New post" };
 
 export default async function NewPostPage() {
-  await requireCmsProfile();
-  const nextPostOptions = await listNextPostOptions(null);
+  const profile = await requireCmsProfile();
+  const [nextPostOptions, tagOptions] = await Promise.all([
+    listNextPostOptions(null),
+    listTagOptions(profile),
+  ]);
 
   return (
     <section className="cms-section">
@@ -31,6 +34,7 @@ export default async function NewPostPage() {
           nextPostId: "",
         }}
         nextPostOptions={nextPostOptions}
+        tagOptions={tagOptions}
         submitLabel="Create draft"
       />
     </section>

@@ -7,13 +7,15 @@ import {
   type PostFormState,
   type PostFormValues,
 } from "@/lib/cms/post-form";
-import type { NextPostOption } from "@/lib/cms/posts";
+import type { NextPostOption, TagOption } from "@/lib/cms/posts";
 import { NextPostPicker } from "./next-post-picker";
+import { TagPicker } from "./tag-picker";
 
 type Props = {
   action: (state: PostFormState, formData: FormData) => Promise<PostFormState>;
   initialValues: PostFormValues;
   nextPostOptions: NextPostOption[];
+  tagOptions: TagOption[];
   submitLabel: string;
   /** Shown above the submit button, e.g. the live-post warning. */
   note?: string;
@@ -23,6 +25,7 @@ export function PostForm({
   action,
   initialValues,
   nextPostOptions,
+  tagOptions,
   submitLabel,
   note,
 }: Props) {
@@ -88,16 +91,16 @@ export function PostForm({
       <Field
         id="tags"
         label="Tags"
-        hint={`Comma separated, up to ${LIMITS.tags}.`}
+        hint={`Up to ${LIMITS.tags}. Pick an existing tag to keep spellings consistent. Enter adds the highlighted tag, a comma adds exactly what you typed.`}
         error={errors.tags}
       >
-        <input
+        <TagPicker
           id="tags"
           name="tags"
+          options={tagOptions}
           defaultValue={values.tags}
-          autoCapitalize="none"
-          aria-invalid={errors.tags ? true : undefined}
-          aria-describedby={errors.tags ? "tags-error" : "tags-hint"}
+          invalid={Boolean(errors.tags)}
+          describedBy={errors.tags ? "tags-error" : "tags-hint"}
         />
       </Field>
 

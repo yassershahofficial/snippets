@@ -44,10 +44,14 @@ export function slugify(text: string): string {
     .replace(/-+$/g, "");
 }
 
+export function normalizeTag(text: string): string {
+  return slugify(text).slice(0, LIMITS.tag).replace(/-+$/g, "");
+}
+
 export function parseTags(raw: string): string[] {
   const seen = new Set<string>();
   for (const part of raw.split(",")) {
-    const tag = slugify(part).slice(0, LIMITS.tag).replace(/-+$/g, "");
+    const tag = normalizeTag(part);
     if (tag) seen.add(tag);
   }
   return [...seen];

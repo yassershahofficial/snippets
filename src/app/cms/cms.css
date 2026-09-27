@@ -481,7 +481,7 @@
   background: #ececef;
 }
 
-.cms-combobox-list [role="option"][aria-selected="true"] {
+.cms-combobox-list [role="option"][data-current] {
   font-weight: 600;
 }
 
@@ -490,6 +490,86 @@
   font-size: 0.8125rem;
   font-weight: 400;
   color: var(--cms-faint);
+}
+
+.cms-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 44px;
+  padding: 0.3125rem 0.375rem;
+  border: 1px solid var(--cms-rule);
+  background: #fff;
+}
+
+.cms-tags:focus-within {
+  outline: 2px solid var(--cms-ink);
+  outline-offset: 1px;
+  border-color: var(--cms-ink);
+}
+
+.cms-tags:has([aria-invalid="true"]) {
+  border-color: var(--cms-alert);
+}
+
+.cms-tag-list {
+  display: contents;
+  list-style: none;
+}
+
+.cms-tag {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--cms-rule);
+  background: var(--cms-paper);
+  font-size: 0.875rem;
+}
+
+.cms-tag span {
+  padding: 0.25rem 0 0.25rem 0.5rem;
+}
+
+.cms-tag button {
+  appearance: none;
+  min-width: 32px;
+  min-height: 30px;
+  padding: 0 0.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--cms-faint);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cms-tag button:focus-visible {
+  outline: 2px solid var(--cms-ink);
+  outline-offset: -2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cms-tag button:hover {
+    color: var(--cms-alert);
+  }
+}
+
+.cms-field .cms-tags input {
+  flex: 1;
+  min-width: 10rem;
+  min-height: 32px;
+  padding: 0 0.375rem;
+  border: 0;
+  background: transparent;
+}
+
+.cms-field .cms-tags input:focus-visible {
+  outline: none;
+}
+
+.cms-field .cms-tags input:disabled {
+  cursor: not-allowed;
 }
 
 .cms-combobox-empty {

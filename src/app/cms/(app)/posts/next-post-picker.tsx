@@ -153,6 +153,7 @@ export function NextPostPicker({
                 data-index={index}
                 role="option"
                 aria-selected={option.id === selectedId}
+                data-current={option.id === selectedId ? "" : undefined}
                 data-active={index === active ? "" : undefined}
                 onClick={() => choose(option)}
                 onMouseMove={() => setActive(index)}
