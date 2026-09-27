@@ -291,6 +291,19 @@
   text-decoration-color: color-mix(in srgb, var(--ink) 32%, transparent);
 }
 
+.home a.home-rail-all {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  margin-top: 0.5rem;
+  font-family: var(--font-body-sans), system-ui, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+  text-decoration-thickness: 1px;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .home a.home-about:hover {
     color: var(--ink);
@@ -305,7 +318,8 @@
     text-decoration-color: currentColor;
   }
 
-  .home a.home-readmore:hover {
+  .home a.home-readmore:hover,
+  .home a.home-rail-all:hover {
     text-underline-offset: 0.42em;
   }
 }

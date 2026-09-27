@@ -30,6 +30,24 @@ export async function getPublishedPostBySlug(
   return data;
 }
 
+/** Every published post for the archive, newest first. */
+export async function listPublishedPosts(): Promise<PostListItem[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select(LIST_COLUMNS)
+    .eq("status", "published")
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(1000);
+
+  if (error) {
+    console.error("listPublishedPosts", error.message);
+    return [];
+  }
+
+  return data ?? [];
+}
+
 /** The post the author picked as "read next", if it is published. */
 export async function getNextPost(post: PostRow): Promise<PostListItem | null> {
   if (!post.next_post_id || post.next_post_id === post.id) return null;

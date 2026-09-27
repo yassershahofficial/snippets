@@ -81,6 +81,11 @@ export default async function HomePage() {
               More posts will show up here.
             </p>
           )}
+          {featured ? (
+            <Link className="home-rail-all" href="/posts">
+              All posts →
+            </Link>
+          ) : null}
         </aside>
       </div>
     </div>

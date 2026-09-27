@@ -76,6 +76,7 @@ export default async function PostPage({ params }: Props) {
 
       <p className="post-back">
         <Link href="/">← Back home</Link>
+        <Link href="/posts">All posts</Link>
       </p>
     </main>
   );
