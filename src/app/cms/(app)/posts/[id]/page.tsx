@@ -29,6 +29,7 @@ import {
   withdrawToDraft,
 } from "../actions";
 import { PostForm } from "../post-form";
+import { ReviewThread } from "../thread";
 
 export const metadata: Metadata = { title: "Edit post" };
 
@@ -70,6 +71,7 @@ export default async function EditPostPage({ params, searchParams }: Props) {
   const body = parsePostBody(post.body);
   const words = countWords(body);
   const authorName = post.author?.username ?? "the author";
+  const showThread = post.status !== "published" && !(isAdmin && isOwner);
 
   const liveEditNote =
     post.status === "published" && !isAdmin
@@ -194,6 +196,8 @@ export default async function EditPostPage({ params, searchParams }: Props) {
               </form>
             ) : null}
           </div>
+
+          {showThread ? <ReviewThread post={post} viewerId={profile.id} /> : null}
 
           <details className="cms-danger">
             <summary>Delete post</summary>

@@ -106,12 +106,73 @@ export type Database = {
         };
         Relationships: [];
       };
+      post_messages: {
+        Row: {
+          id: string;
+          post_id: string;
+          sender_id: string;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          sender_id: string;
+          body: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          post_id?: string;
+          sender_id?: string;
+          body?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "post_messages_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "posts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "post_messages_sender_id_fkey";
+            columns: ["sender_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      post_thread_reads: {
+        Row: {
+          post_id: string;
+          user_id: string;
+          last_read_at: string;
+        };
+        Insert: {
+          post_id: string;
+          user_id: string;
+          last_read_at?: string;
+        };
+        Update: {
+          post_id?: string;
+          user_id?: string;
+          last_read_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      unread_thread_posts: {
+        Args: Record<string, never>;
+        Returns: string[];
       };
       sync_profile: {
         Args: Record<string, never>;

@@ -843,6 +843,119 @@
   color: var(--cms-muted);
 }
 
+/* Review thread */
+
+.cms-thread {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--cms-rule);
+  scroll-margin-top: 1.5rem;
+}
+
+.cms-thread-title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cms-faint);
+}
+
+.cms-thread-empty {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--cms-muted);
+}
+
+.cms-thread-list {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cms-thread-item {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.cms-thread-new {
+  margin: 0 0 0.25rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--cms-alert);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cms-alert);
+}
+
+.cms-thread-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--cms-faint);
+}
+
+.cms-thread-sender {
+  color: var(--cms-ink);
+}
+
+.cms-thread-body {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cms-thread-delete {
+  appearance: none;
+  min-height: 2rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cms-faint);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-decoration-color: var(--cms-rule);
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.cms-thread-delete:focus-visible {
+  outline: 2px solid var(--cms-ink);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cms-thread-delete:hover {
+    color: var(--cms-alert);
+    text-decoration-color: currentColor;
+  }
+}
+
+.cms-post-meta a.cms-new-reply {
+  color: var(--cms-alert);
+  text-decoration-color: currentColor;
+}
+
+.cms-thread-form {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+
+.cms-thread-form .cms-field {
+  width: 100%;
+}
+
 /* Read-only review of another author's post */
 
 .cms-review {

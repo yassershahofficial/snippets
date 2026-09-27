@@ -11,6 +11,7 @@ import {
   listCmsPosts,
   type StatusFilter,
 } from "@/lib/cms/posts";
+import { listUnreadPostIds } from "@/lib/cms/thread";
 
 export const metadata: Metadata = { title: "Posts" };
 
@@ -43,7 +44,10 @@ export default async function CmsPostsPage({ searchParams }: Props) {
       ? POST_ERROR_MESSAGES[params.error as PostErrorCode]
       : null;
 
-  const posts = await listCmsPosts(profile, filter);
+  const [posts, unread] = await Promise.all([
+    listCmsPosts(profile, filter),
+    listUnreadPostIds(),
+  ]);
   const isAdmin = profile.role === "admin";
 
   return (
@@ -93,6 +97,11 @@ export default async function CmsPostsPage({ searchParams }: Props) {
                   {STATUS_LABELS[post.status]}
                 </span>
                 {post.featured ? <span className="cms-status">Featured</span> : null}
+                {unread.has(post.id) ? (
+                  <Link href={`${cmsPostPath(post.id)}#thread`} className="cms-new-reply">
+                    New reply
+                  </Link>
+                ) : null}
                 {isAdmin && post.author_id !== profile.id && post.author ? (
                   <span>by {post.author.username}</span>
                 ) : null}
