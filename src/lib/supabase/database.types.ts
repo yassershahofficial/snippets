@@ -14,6 +14,8 @@ export type AppealStatus = "pending" | "accepted" | "rejected";
 
 export type BanContentAction = "hide" | "unpublish" | "delete";
 
+export type BanLiftedBy = "admin" | "appeal";
+
 export type Database = {
   snippets: {
     Tables: {
@@ -144,6 +146,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "appeals_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      bans: {
+        Row: {
+          id: string;
+          user_id: string;
+          reason: string | null;
+          content_action: BanContentAction | null;
+          banned_at: string;
+          lifted_at: string | null;
+          lifted_by: BanLiftedBy | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          reason?: string | null;
+          content_action?: BanContentAction | null;
+          banned_at?: string;
+          lifted_at?: string | null;
+          lifted_by?: BanLiftedBy | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          reason?: string | null;
+          content_action?: BanContentAction | null;
+          banned_at?: string;
+          lifted_at?: string | null;
+          lifted_by?: BanLiftedBy | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bans_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
