@@ -27,7 +27,6 @@ export default async function NewPostPage() {
           title: "",
           slug: "",
           description: "",
-          type: "article",
           tags: "",
           nextPostId: "",
         }}

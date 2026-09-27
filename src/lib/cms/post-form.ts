@@ -1,11 +1,3 @@
-import type { PostType } from "@/lib/supabase/database.types";
-
-export const POST_TYPES: { value: PostType; label: string }[] = [
-  { value: "article", label: "Article" },
-  { value: "code", label: "Code" },
-  { value: "opinion", label: "Opinion" },
-];
-
 export const LIMITS = {
   title: 160,
   description: 300,
@@ -20,7 +12,6 @@ export type PostFormValues = {
   title: string;
   slug: string;
   description: string;
-  type: PostType;
   tags: string;
   nextPostId: string;
 };
@@ -38,7 +29,6 @@ export type ValidPost = {
   title: string;
   slug: string;
   description: string;
-  type: PostType;
   tags: string[];
   next_post_id: string | null;
 };
@@ -65,12 +55,10 @@ export function parseTags(raw: string): string[] {
 
 export function readPostForm(formData: FormData): PostFormValues {
   const text = (key: string) => String(formData.get(key) ?? "");
-  const type = text("type");
   return {
     title: text("title"),
     slug: text("slug"),
     description: text("description"),
-    type: POST_TYPES.some((t) => t.value === type) ? (type as PostType) : "article",
     tags: text("tags"),
     nextPostId: text("nextPostId"),
   };
@@ -114,7 +102,6 @@ export function validatePostForm(
       title,
       slug,
       description,
-      type: values.type,
       tags,
       next_post_id: nextPostId,
     },
@@ -165,7 +152,6 @@ export function postToFormValues(post: {
   title: string;
   slug: string;
   description: string;
-  type: PostType;
   tags: string[];
   next_post_id: string | null;
 }): PostFormValues {
@@ -173,7 +159,6 @@ export function postToFormValues(post: {
     title: post.title,
     slug: post.slug,
     description: post.description,
-    type: post.type,
     tags: post.tags.join(", "),
     nextPostId: post.next_post_id ?? "",
   };

@@ -3,12 +3,12 @@
 import { useActionState } from "react";
 import {
   LIMITS,
-  POST_TYPES,
   slugify,
   type PostFormState,
   type PostFormValues,
 } from "@/lib/cms/post-form";
 import type { NextPostOption } from "@/lib/cms/posts";
+import { NextPostPicker } from "./next-post-picker";
 
 type Props = {
   action: (state: PostFormState, formData: FormData) => Promise<PostFormState>;
@@ -34,7 +34,9 @@ export function PostForm({
 
   return (
     <form action={formAction} className="cms-form" noValidate>
-      <Field id="title" label="Title" error={errors.title}>
+      <p className="cms-form-legend">Fields marked * are required. A draft only needs a title to save.</p>
+
+      <Field id="title" label="Title" required error={errors.title}>
         <input
           id="title"
           name="title"
@@ -67,7 +69,8 @@ export function PostForm({
       <Field
         id="description"
         label="Description"
-        hint="The short hook shown on the home page and in search results. Needed before review."
+        required
+        hint="The short hook shown on the home page and in search results."
         error={errors.description}
       >
         <textarea
@@ -76,53 +79,42 @@ export function PostForm({
           defaultValue={values.description}
           maxLength={LIMITS.description}
           rows={3}
+          aria-required
           aria-invalid={errors.description ? true : undefined}
           aria-describedby={errors.description ? "description-error" : "description-hint"}
         />
       </Field>
 
-      <div className="cms-form-row">
-        <Field id="type" label="Type">
-          <select id="type" name="type" defaultValue={values.type}>
-            {POST_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field
+      <Field
+        id="tags"
+        label="Tags"
+        hint={`Comma separated, up to ${LIMITS.tags}.`}
+        error={errors.tags}
+      >
+        <input
           id="tags"
-          label="Tags"
-          hint={`Comma separated, up to ${LIMITS.tags}.`}
-          error={errors.tags}
-        >
-          <input
-            id="tags"
-            name="tags"
-            defaultValue={values.tags}
-            autoCapitalize="none"
-            aria-invalid={errors.tags ? true : undefined}
-            aria-describedby={errors.tags ? "tags-error" : "tags-hint"}
-          />
-        </Field>
-      </div>
+          name="tags"
+          defaultValue={values.tags}
+          autoCapitalize="none"
+          aria-invalid={errors.tags ? true : undefined}
+          aria-describedby={errors.tags ? "tags-error" : "tags-hint"}
+        />
+      </Field>
 
       <Field
         id="nextPostId"
         label="Next post"
-        hint="Suggested to readers at the end of this post."
+        hint="Suggested to readers at the end of this post. Type to search by title."
         error={errors.nextPostId}
       >
-        <select id="nextPostId" name="nextPostId" defaultValue={values.nextPostId}>
-          <option value="">None</option>
-          {nextPostOptions.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.title}
-            </option>
-          ))}
-        </select>
+        <NextPostPicker
+          id="nextPostId"
+          name="nextPostId"
+          options={nextPostOptions}
+          defaultValue={values.nextPostId}
+          invalid={Boolean(errors.nextPostId)}
+          describedBy={errors.nextPostId ? "nextPostId-error" : "nextPostId-hint"}
+        />
       </Field>
 
       {note ? <p className="cms-form-note">{note}</p> : null}
@@ -146,19 +138,28 @@ export function PostForm({
 function Field({
   id,
   label,
+  required,
   hint,
   error,
   children,
 }: {
   id: string;
   label: string;
+  required?: boolean;
   hint?: string;
   error?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="cms-field">
-      <label htmlFor={id}>{label}</label>
+      <label htmlFor={id}>
+        {label}
+        {required ? (
+          <span className="cms-required" aria-hidden="true">
+            {" "}*
+          </span>
+        ) : null}
+      </label>
       {children}
       {hint ? (
         <p id={`${id}-hint`} className="cms-field-hint">

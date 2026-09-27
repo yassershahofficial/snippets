@@ -10,12 +10,12 @@ type PostRow = Database["snippets"]["Tables"]["posts"]["Row"];
 
 export type CmsPostListItem = Pick<
   PostRow,
-  "id" | "slug" | "title" | "status" | "type" | "featured" | "updated_at" | "author_id"
+  "id" | "slug" | "title" | "status" | "featured" | "updated_at" | "author_id"
 > & { author: { username: string } | null };
 
 export type CmsPost = PostRow & { author: { username: string } | null };
 
-export type NextPostOption = Pick<PostRow, "id" | "title">;
+export type NextPostOption = Pick<PostRow, "id" | "title" | "status" | "published_at">;
 
 export const STATUS_LABELS: Record<PostStatus, string> = {
   draft: "Draft",
@@ -46,7 +46,7 @@ export async function listCmsPosts(
   let query = supabase
     .from("posts")
     .select(
-      "id, slug, title, status, type, featured, updated_at, author_id, author:profiles(username)",
+      "id, slug, title, status, featured, updated_at, author_id, author:profiles(username)",
     )
     .order("updated_at", { ascending: false });
 
@@ -91,16 +91,21 @@ export async function getCmsPost(
   return data;
 }
 
+/** Published posts, plus the currently linked one even if it was unpublished. */
 export async function listNextPostOptions(
   excludeId: string | null,
+  selectedId: string | null = null,
 ): Promise<NextPostOption[]> {
   const supabase = await createClient();
   let query = supabase
     .from("posts")
-    .select("id, title")
-    .eq("status", "published")
-    .order("published_at", { ascending: false })
-    .limit(100);
+    .select("id, title, status, published_at")
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(1000);
+  query =
+    selectedId && isUuid(selectedId)
+      ? query.or(`status.eq.published,id.eq.${selectedId}`)
+      : query.eq("status", "published");
   if (excludeId) query = query.neq("id", excludeId);
 
   const { data, error } = await query;

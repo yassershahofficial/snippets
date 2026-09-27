@@ -8,8 +8,6 @@ export type Json =
 
 export type PostStatus = "draft" | "in_review" | "published";
 
-export type PostType = "code" | "article" | "opinion";
-
 export type ProfileRole = "admin" | "author";
 
 export type Database = {
@@ -28,7 +26,6 @@ export type Database = {
           created_at: string;
           updated_at: string;
           author_id: string | null;
-          type: PostType;
           tags: string[];
           next_post_id: string | null;
         };
@@ -44,7 +41,6 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           author_id?: string | null;
-          type?: PostType;
           tags?: string[];
           next_post_id?: string | null;
         };
@@ -60,7 +56,6 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           author_id?: string | null;
-          type?: PostType;
           tags?: string[];
           next_post_id?: string | null;
         };

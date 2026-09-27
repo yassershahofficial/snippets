@@ -92,7 +92,6 @@ export default async function CmsPostsPage({ searchParams }: Props) {
                   {STATUS_LABELS[post.status]}
                 </span>
                 {post.featured ? <span className="cms-status">Featured</span> : null}
-                <span>{post.type}</span>
                 {isAdmin && post.author_id !== profile.id && post.author ? (
                   <span>by {post.author.username}</span>
                 ) : null}
