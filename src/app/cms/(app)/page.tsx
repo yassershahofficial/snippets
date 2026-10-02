@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireCmsProfile } from "@/lib/cms/auth";
-import { CMS_BASE } from "@/lib/cms/paths";
+import { CMS_HOME } from "@/lib/cms/paths";
 import { POST_ERROR_MESSAGES, type PostErrorCode } from "@/lib/cms/post-form";
 import {
   STATUS_FILTERS,
@@ -71,7 +71,7 @@ export default async function CmsPostsPage({ searchParams }: Props) {
         {STATUS_FILTERS.map((f) => (
           <Link
             key={f}
-            href={f === "all" ? CMS_BASE : `${CMS_BASE}?status=${f}`}
+            href={f === "all" ? CMS_HOME : `${CMS_HOME}?status=${f}`}
             aria-current={f === filter ? "page" : undefined}
           >
             {FILTER_LABELS[f]}

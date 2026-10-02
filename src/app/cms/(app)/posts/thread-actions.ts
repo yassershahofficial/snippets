@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireCmsProfile } from "@/lib/cms/auth";
+import { cmsRoute } from "@/lib/cms/paths";
 import { cmsPostPath, getCmsPost } from "@/lib/cms/posts";
 import { MESSAGE_MAX } from "@/lib/cms/thread-limits";
 
@@ -45,7 +46,7 @@ export async function sendMessage(
     return { body, error: "Couldn't send. Please try again." };
   }
 
-  revalidatePath(cmsPostPath(postId));
+  revalidatePath(cmsRoute(cmsPostPath(postId)));
   return { body: "", sentAt: Date.now() };
 }
 
@@ -58,5 +59,5 @@ export async function deleteMessage(postId: string, messageId: string) {
     .eq("id", messageId)
     .eq("sender_id", profile.id);
   if (error) console.error("deleteMessage", error.message);
-  revalidatePath(cmsPostPath(postId));
+  revalidatePath(cmsRoute(cmsPostPath(postId)));
 }

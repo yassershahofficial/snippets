@@ -12,7 +12,7 @@ import {
   syncPostMedia,
   unpublishPostMedia,
 } from "@/lib/cms/media";
-import { CMS_BASE } from "@/lib/cms/paths";
+import { CMS_HOME, cmsRoute } from "@/lib/cms/paths";
 import { cmsPostPath, getCmsPost, type CmsPost } from "@/lib/cms/posts";
 import {
   POST_ERROR_MESSAGES,
@@ -85,7 +85,7 @@ export async function updatePost(
   if (error) return postErrorState(values, error);
 
   await syncPostMedia(id, data.body, updated.status === "published");
-  revalidatePath(cmsPostPath(id));
+  revalidatePath(cmsRoute(cmsPostPath(id)));
   const sentBack = post.status === "published" && updated.status === "in_review";
   return {
     values,
@@ -101,7 +101,7 @@ type Loaded = { profile: CmsProfile; post: CmsPost };
 async function loadForAction(id: string): Promise<Loaded> {
   const profile = await requireCmsProfile();
   const post = await getCmsPost(profile, id);
-  if (!post) redirect(`${CMS_BASE}?error=missing`);
+  if (!post) redirect(`${CMS_HOME}?error=missing`);
   return { profile, post };
 }
 
@@ -113,7 +113,7 @@ async function setStatus(id: string, post: CmsPost, status: PostStatus) {
   const supabase = await createClient();
   const { error } = await supabase.from("posts").update({ status }).eq("id", post.id);
   if (error) fail(id, describePostError(error).code);
-  revalidatePath(cmsPostPath(id));
+  revalidatePath(cmsRoute(cmsPostPath(id)));
 }
 
 export async function submitForReview(id: string) {
@@ -131,7 +131,7 @@ export async function withdrawToDraft(id: string) {
   if (post.status === "published") await unpublishPostMedia(post.id);
 
   if (post.author_id !== profile.id) {
-    redirect(`${CMS_BASE}?notice=${post.status === "published" ? "unpublished" : "rejected"}`);
+    redirect(`${CMS_HOME}?notice=${post.status === "published" ? "unpublished" : "rejected"}`);
   }
   redirect(`${cmsPostPath(id)}?notice=draft`);
 }
@@ -163,7 +163,7 @@ export async function setFeatured(id: string, featured: boolean) {
   const { error } = await supabase.from("posts").update({ featured }).eq("id", id);
   if (error) fail(id, describePostError(error).code);
 
-  revalidatePath(cmsPostPath(id));
+  revalidatePath(cmsRoute(cmsPostPath(id)));
   redirect(`${cmsPostPath(id)}?notice=${featured ? "featured" : "unfeatured"}`);
 }
 
@@ -174,5 +174,5 @@ export async function deletePost(id: string) {
   const { error } = await supabase.from("posts").delete().eq("id", post.id);
   if (error) fail(id, describePostError(error).code);
   await deleteMedia(media);
-  redirect(`${CMS_BASE}?notice=deleted`);
+  redirect(`${CMS_HOME}?notice=deleted`);
 }

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { requireCmsProfile } from "@/lib/cms/auth";
 import { countPendingAppeals } from "@/lib/cms/appeals";
-import { CMS_APPEALS, CMS_AUTHORS, CMS_BASE, CMS_PROFILE } from "@/lib/cms/paths";
+import { CMS_APPEALS, CMS_AUTHORS, CMS_HOME, CMS_PROFILE, siteHref } from "@/lib/cms/paths";
 import { signOut } from "../actions";
 
 export default async function CmsAppLayout({
@@ -19,11 +19,11 @@ export default async function CmsAppLayout({
       <header className="cms-header">
         <div className="cms-header-main">
           <p className="cms-logo">
-            <Link href={CMS_BASE}>Snippets</Link>
+            <Link href={CMS_HOME}>Snippets</Link>
             <span className="cms-logo-tag">CMS</span>
           </p>
           <nav className="cms-header-nav" aria-label="CMS">
-            <Link href={CMS_BASE}>Posts</Link>
+            <Link href={CMS_HOME}>Posts</Link>
             {isAdmin ? (
               <>
                 <Link href={CMS_AUTHORS}>Authors</Link>
@@ -32,7 +32,7 @@ export default async function CmsAppLayout({
                 </Link>
               </>
             ) : null}
-            <Link href="/">View site</Link>
+            <Link href={siteHref("/")}>View site</Link>
           </nav>
         </div>
         <div className="cms-header-nav">

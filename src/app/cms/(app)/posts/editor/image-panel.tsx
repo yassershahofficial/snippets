@@ -2,6 +2,7 @@
 
 import type { Editor } from "@tiptap/react";
 import { useRef, useState } from "react";
+import { CMS_MEDIA } from "@/lib/cms/paths";
 import { MEDIA_MAX_HEIGHT, MEDIA_MAX_WIDTH } from "@/lib/media/limits";
 import type { ImageCrop, ImageNode, ImageRatio, ImageSize } from "@/lib/posts/body";
 import {
@@ -98,7 +99,7 @@ export function ImagePanel({ editor, idPrefix, postId, target, urls, onUploaded,
       const form = new FormData();
       form.append("file", blob, blob.type === "image/webp" ? "image.webp" : "image.jpg");
       if (postId) form.append("postId", postId);
-      const response = await fetch("/cms/media", { method: "POST", body: form });
+      const response = await fetch(CMS_MEDIA, { method: "POST", body: form });
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.id) {
         throw new Error(data?.error ?? "The upload failed. Check your connection and try again.");

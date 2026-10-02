@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/cms/auth";
 import { BAN_REASON_MAX } from "@/lib/cms/appeal-limits";
 import { removeOwnerMedia, republishOwnerMedia } from "@/lib/cms/media";
-import { CMS_APPEALS, CMS_AUTHORS } from "@/lib/cms/paths";
+import { CMS_APPEALS, CMS_AUTHORS, cmsRoute } from "@/lib/cms/paths";
 import { isUuid } from "@/lib/cms/posts";
 import type { BanContentAction } from "@/lib/supabase/database.types";
 
@@ -77,6 +77,6 @@ export async function decideAppeal(appealId: string, accept: boolean) {
     if (appeal) await republishOwnerMedia(appeal.user_id);
     refreshPublic();
   }
-  revalidatePath(CMS_APPEALS);
+  revalidatePath(cmsRoute(CMS_APPEALS));
   redirect(`${CMS_APPEALS}?notice=${accept ? "accepted" : "rejected"}`);
 }

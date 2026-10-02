@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireCmsProfile } from "@/lib/cms/auth";
-import { CMS_BASE } from "@/lib/cms/paths";
+import { CMS_HOME, cmsRoute } from "@/lib/cms/paths";
 import { validateUsername } from "@/lib/cms/username";
 
 export type UsernameState = {
@@ -45,6 +45,6 @@ export async function updateUsername(
     return { value, error: "Something went wrong. Please try again." };
   }
 
-  revalidatePath(CMS_BASE, "layout");
+  revalidatePath(cmsRoute(CMS_HOME), "layout");
   return { value, message: "Username updated." };
 }

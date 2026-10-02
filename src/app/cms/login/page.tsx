@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCmsSession } from "@/lib/cms/auth";
-import { safeCmsNext } from "@/lib/cms/paths";
+import { safeCmsNext, siteHref } from "@/lib/cms/paths";
 import { signInWithGoogle, signOut } from "../actions";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -30,7 +30,7 @@ export default async function CmsLoginPage({ searchParams }: Props) {
   return (
     <main className="cms-auth">
       <p className="cms-logo">
-        <Link href="/">Snippets</Link>
+        <Link href={siteHref("/")}>Snippets</Link>
       </p>
       <h1>Write for Snippets</h1>
       <p className="cms-lede">
@@ -65,7 +65,7 @@ export default async function CmsLoginPage({ searchParams }: Props) {
       )}
 
       <p className="cms-back">
-        <Link href="/">Back to reading</Link>
+        <Link href={siteHref("/")}>Back to reading</Link>
       </p>
     </main>
   );

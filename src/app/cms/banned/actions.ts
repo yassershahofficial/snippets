@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSignedInProfile } from "@/lib/cms/auth";
 import { APPEAL_MAX } from "@/lib/cms/appeal-limits";
-import { CMS_BANNED } from "@/lib/cms/paths";
+import { CMS_BANNED, cmsRoute } from "@/lib/cms/paths";
 
 export type AppealState = { message: string; error?: string };
 
@@ -35,6 +35,6 @@ export async function submitAppeal(
     return { message, error: "Couldn't send your appeal. Please try again." };
   }
 
-  revalidatePath(CMS_BANNED);
+  revalidatePath(cmsRoute(CMS_BANNED));
   return { message: "" };
 }

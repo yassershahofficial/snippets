@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { requireCmsProfile } from "@/lib/cms/auth";
 import { scheduleMediaCleanup, signMediaUrls } from "@/lib/cms/media";
 import { collectMediaIds } from "@/lib/posts/media-refs";
-import { CMS_BASE } from "@/lib/cms/paths";
+import { CMS_HOME, siteHref } from "@/lib/cms/paths";
 import {
   POST_ERROR_MESSAGES,
   postToFormValues,
@@ -85,7 +85,7 @@ export default async function EditPostPage({ params, searchParams }: Props) {
   return (
     <section className="cms-section">
       <p className="cms-crumb">
-        <Link href={CMS_BASE}>Posts</Link>
+        <Link href={CMS_HOME}>Posts</Link>
       </p>
       <h1>{post.title}</h1>
 
@@ -161,7 +161,7 @@ export default async function EditPostPage({ params, searchParams }: Props) {
               Preview
             </Link>
             {post.status === "published" ? (
-              <Link href={postHref(post.slug)} className="cms-button cms-button-quiet cms-button-link">
+              <Link href={siteHref(postHref(post.slug))} className="cms-button cms-button-quiet cms-button-link">
                 View live
               </Link>
             ) : null}

@@ -2,7 +2,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
-import { CMS_BANNED, CMS_BASE, CMS_LOGIN } from "./paths";
+import { CMS_BANNED, CMS_HOME, CMS_LOGIN } from "./paths";
 
 type ProfileRow = Database["snippets"]["Tables"]["profiles"]["Row"];
 
@@ -60,7 +60,7 @@ export async function requireCmsProfile(): Promise<CmsProfile> {
 
 export async function requireAdmin(): Promise<CmsProfile> {
   const profile = await requireCmsProfile();
-  if (profile.role !== "admin") redirect(CMS_BASE);
+  if (profile.role !== "admin") redirect(CMS_HOME);
   return profile;
 }
 

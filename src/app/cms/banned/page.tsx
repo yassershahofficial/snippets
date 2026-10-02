@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireSignedInProfile } from "@/lib/cms/auth";
 import { getLatestAppeal } from "@/lib/cms/appeals";
-import { CMS_BASE } from "@/lib/cms/paths";
+import { CMS_HOME, siteHref } from "@/lib/cms/paths";
 import { signOut } from "../actions";
 import { AppealForm } from "./appeal-form";
 
@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Account banned" };
 
 export default async function BannedPage() {
   const profile = await requireSignedInProfile();
-  if (!profile.banned_at) redirect(CMS_BASE);
+  if (!profile.banned_at) redirect(CMS_HOME);
 
   const appeal = await getLatestAppeal(profile.id);
   const pending = appeal?.status === "pending";
@@ -20,7 +20,7 @@ export default async function BannedPage() {
   return (
     <main className="cms-auth cms-banned">
       <p className="cms-logo">
-        <Link href="/">Snippets</Link>
+        <Link href={siteHref("/")}>Snippets</Link>
       </p>
       <h1>Your author account is banned</h1>
       <p className="cms-lede">
