@@ -10,6 +10,15 @@ import {
 } from "@/lib/cms/paths";
 
 export async function updateSession(request: NextRequest) {
+  const onCmsHost =
+    CMS_HOST !== null && request.headers.get("host")?.toLowerCase() === CMS_HOST;
+
+  if (onCmsHost && request.nextUrl.pathname === "/robots.txt") {
+    return new NextResponse("User-agent: *\nDisallow: /\n", {
+      headers: { "Content-Type": "text/plain" },
+    });
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -48,8 +57,6 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
 
   const { pathname, search } = request.nextUrl;
-  const onCmsHost =
-    CMS_HOST !== null && request.headers.get("host")?.toLowerCase() === CMS_HOST;
 
   // Only auth cookies and their headers may be copied: the next() response
   // also carries internal headers that would break a redirect or rewrite.

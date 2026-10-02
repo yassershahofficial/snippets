@@ -48,6 +48,26 @@ export async function listPublishedPosts(): Promise<PostListItem[]> {
   return data ?? [];
 }
 
+/** Published slugs for the sitemap, most recently updated first. */
+export async function listSitemapPosts(): Promise<
+  Pick<PostRow, "slug" | "updated_at">[]
+> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select("slug, updated_at")
+    .eq("status", "published")
+    .order("updated_at", { ascending: false })
+    .limit(5000);
+
+  if (error) {
+    console.error("listSitemapPosts", error.message);
+    return [];
+  }
+
+  return data ?? [];
+}
+
 /** The post the author picked as "read next", if it is published. */
 export async function getNextPost(post: PostRow): Promise<PostListItem | null> {
   if (!post.next_post_id || post.next_post_id === post.id) return null;
