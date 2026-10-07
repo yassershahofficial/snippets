@@ -716,8 +716,15 @@
   width: 100%;
 }
 
-.cms-link-row .cms-field-error {
+.cms-link-row .cms-field-error,
+.cms-link-hint {
   flex-basis: 100%;
+}
+
+.cms-link-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--cms-faint);
 }
 
 /* Image panel */
@@ -997,6 +1004,35 @@
 
 .cms-body-content .node-image.ProseMirror-selectednode {
   outline: none;
+}
+
+/* Videos inside the editor */
+
+.cms-video-node {
+  position: relative;
+}
+
+.cms-video-node .post-video {
+  cursor: grab;
+}
+
+.cms-video-node[data-selected] .post-video {
+  outline: 2px solid var(--cms-ink);
+  outline-offset: 3px;
+}
+
+.cms-body-content .node-youtube.ProseMirror-selectednode {
+  outline: none;
+}
+
+.cms-video-badge {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: rgb(0 0 0 / 0.75);
+  color: #fff;
+  font-size: 0.8125rem;
 }
 
 .cms-image-edit {

@@ -18,7 +18,9 @@ import type {
   PostBody,
   TextNode,
   TitleNode,
+  YouTubeNode,
 } from "@/lib/posts/body";
+import { youtubeEmbedUrl, YOUTUBE_ID } from "@/lib/posts/youtube";
 
 type RenderOptions = {
   /** When true, title/description blocks are omitted (page shows columns). */
@@ -184,6 +186,27 @@ function renderImage(node: ImageNode, key: string, options: RenderOptions): Reac
   return <PostFigure key={key} attrs={attrs} src={src} />;
 }
 
+function renderYouTube(node: YouTubeNode, key: string): ReactNode {
+  const { id, start, caption } = node.attrs ?? {};
+  if (typeof id !== "string" || !YOUTUBE_ID.test(id)) return null;
+  const from = Number.isInteger(start) && start > 0 ? start : 0;
+  return (
+    <figure key={key} className="post-video">
+      <div className="post-video-frame">
+        <iframe
+          src={youtubeEmbedUrl(id, from)}
+          title={caption || "YouTube video"}
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+        />
+      </div>
+      {caption ? <figcaption className="post-figcaption">{caption}</figcaption> : null}
+    </figure>
+  );
+}
+
 function renderCallout(node: CalloutNode, key: string): ReactNode {
   const variant = node.attrs.variant;
   return (
@@ -219,6 +242,8 @@ function renderBlock(block: Block, key: string, options: RenderOptions): ReactNo
       return renderOrderedList(block, key);
     case "image":
       return renderImage(block, key, options);
+    case "youtube":
+      return renderYouTube(block, key);
     case "callout":
       return renderCallout(block, key);
     default:

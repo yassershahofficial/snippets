@@ -7,6 +7,12 @@ export type MediaContextValue = {
   urls: Record<string, string>;
   /** Opens the image panel for the selected image. */
   editImage: () => void;
+  /** Opens the video row for the selected video. */
+  editVideo: () => void;
 };
 
-export const MediaContext = createContext<MediaContextValue>({ urls: {}, editImage: () => {} });
+export const MediaContext = createContext<MediaContextValue>({
+  urls: {},
+  editImage: () => {},
+  editVideo: () => {},
+});

@@ -13,8 +13,10 @@ import type {
   ParagraphNode,
   PostBody,
   TextNode,
+  YouTubeNode,
 } from "./body";
 import { IMAGE_RATIOS, IMAGE_SIZES, IMAGE_TEXT_MAX, MIN_CROP, ratioValue } from "./image";
+import { VIDEO_CAPTION_MAX, VIDEO_START_MAX, YOUTUBE_ID } from "./youtube";
 import { MEDIA_MAX_HEIGHT, MEDIA_MAX_WIDTH } from "@/lib/media/limits";
 
 /**
@@ -118,6 +120,8 @@ function blockToEditor(block: Block): EditorNode | null {
       return listToEditor(block);
     case "image":
       return { type: "image", attrs: { ...block.attrs } };
+    case "youtube":
+      return { type: "youtube", attrs: { ...block.attrs } };
     case "callout":
       return {
         type: "callout",
@@ -241,12 +245,16 @@ function readDimension(value: unknown, max: number): number {
   return value;
 }
 
-function readImageText(value: unknown, what: string): string {
+function readShortText(value: unknown, what: string, max: number): string {
   if (value === undefined || value === null) return "";
   if (typeof value !== "string") reject("The body is malformed.");
   const text = value.replace(/\s+/g, " ").trim();
-  if (text.length > IMAGE_TEXT_MAX) reject(`Image ${what} can be at most ${IMAGE_TEXT_MAX} characters.`);
+  if (text.length > max) reject(`${what} can be at most ${max} characters.`);
   return text;
+}
+
+function readImageText(value: unknown, what: string): string {
+  return readShortText(value, `Image ${what}`, IMAGE_TEXT_MAX);
 }
 
 function readCrop(value: unknown, width: number, height: number, ratio: number): ImageCrop {
@@ -286,6 +294,19 @@ function readImage(node: Record<string, unknown>): ImageNode {
   };
 }
 
+function readYouTube(node: Record<string, unknown>): YouTubeNode {
+  const attrs = isRecord(node.attrs) ? node.attrs : {};
+  if (typeof attrs.id !== "string" || !YOUTUBE_ID.test(attrs.id)) {
+    reject("A video is missing its YouTube link. Remove it and add it again.");
+  }
+  const start = attrs.start ?? 0;
+  if (typeof start !== "number" || !Number.isInteger(start) || start < 0 || start > VIDEO_START_MAX) {
+    reject("A video has an invalid start time. Edit it and paste the link again.");
+  }
+  const caption = readShortText(attrs.caption, "Video captions", VIDEO_CAPTION_MAX);
+  return { type: "youtube", attrs: { id: attrs.id, start, caption } };
+}
+
 function readBlock(node: Record<string, unknown>, ctx: Context): Block {
   switch (node.type) {
     case "paragraph":
@@ -309,6 +330,8 @@ function readBlock(node: Record<string, unknown>, ctx: Context): Block {
       return readList(node, ctx, 1);
     case "image":
       return readImage(node);
+    case "youtube":
+      return readYouTube(node);
     case "callout": {
       const variant = isRecord(node.attrs) ? node.attrs.variant : undefined;
       if (!CALLOUT_VARIANTS.includes(variant as CalloutVariant)) reject("A callout has an unknown style.");

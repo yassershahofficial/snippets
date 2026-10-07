@@ -96,6 +96,16 @@ export type ImageNode = {
   };
 };
 
+/** A YouTube video, stored by id only. start is in seconds, 0 for the beginning. */
+export type YouTubeNode = {
+  type: "youtube";
+  attrs: {
+    id: string;
+    start: number;
+    caption: string;
+  };
+};
+
 export type CalloutNode = {
   type: "callout";
   attrs: { variant: CalloutVariant };
@@ -113,6 +123,7 @@ export type Block =
   | BulletListNode
   | OrderedListNode
   | ImageNode
+  | YouTubeNode
   | CalloutNode;
 
 export type PostBody = {

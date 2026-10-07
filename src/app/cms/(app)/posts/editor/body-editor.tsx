@@ -10,6 +10,7 @@ import { CALLOUT_VARIANTS, isSafeHref } from "@/lib/posts/editor-doc";
 import { postEditorExtensions } from "./extensions";
 import { ImagePanel, type ImageAttrs, type ImageTarget } from "./image-panel";
 import { MediaContext } from "./media-context";
+import { VideoRow, type VideoAttrs, type VideoTarget } from "./video-row";
 
 type Props = {
   id: string;
@@ -58,6 +59,7 @@ export function BodyEditor({
   const [json, setJson] = useState(defaultValue);
   const [urls, setUrls] = useState<Record<string, string>>(() => mediaUrls ?? {});
   const [imageTarget, setImageTarget] = useState<ImageTarget | null>(null);
+  const [videoTarget, setVideoTarget] = useState<VideoTarget | null>(null);
 
   const editor = useEditor({
     extensions: postEditorExtensions(PLACEHOLDER),
@@ -80,32 +82,44 @@ export function BodyEditor({
     },
   });
 
-  const editingPos = imageTarget?.pos ?? null;
+  const editingPos = imageTarget?.pos ?? videoTarget?.pos ?? null;
   useEffect(() => {
     if (!editor || editingPos === null) return;
-    const close = () => setImageTarget(null);
+    const close = () => {
+      setImageTarget(null);
+      setVideoTarget(null);
+    };
     editor.on("update", close);
     return () => {
       editor.off("update", close);
     };
   }, [editor, editingPos]);
 
-  const media = useMemo(
-    () => ({
+  const media = useMemo(() => {
+    const selected = (name: string) => {
+      const selection = editor?.state.selection;
+      return selection instanceof NodeSelection && selection.node.type.name === name ? selection : null;
+    };
+    return {
       urls,
       editImage: () => {
-        if (!editor) return;
-        const { selection } = editor.state;
-        if (selection instanceof NodeSelection && selection.node.type.name === "image") {
-          setImageTarget({ pos: selection.from, attrs: selection.node.attrs as ImageAttrs });
-        }
+        const selection = selected("image");
+        if (!selection) return;
+        setVideoTarget(null);
+        setImageTarget({ pos: selection.from, attrs: selection.node.attrs as ImageAttrs });
       },
-    }),
-    [editor, urls],
-  );
+      editVideo: () => {
+        const selection = selected("youtube");
+        if (!selection) return;
+        setImageTarget(null);
+        setVideoTarget({ pos: selection.from, attrs: selection.node.attrs as VideoAttrs });
+      },
+    };
+  }, [editor, urls]);
 
   function openImage() {
     if (!editor) return;
+    setVideoTarget(null);
     const { selection } = editor.state;
     if (selection instanceof NodeSelection && selection.node.type.name === "image") {
       setImageTarget({ pos: selection.from, attrs: selection.node.attrs as ImageAttrs });
@@ -114,8 +128,24 @@ export function BodyEditor({
     }
   }
 
-  function closeImage() {
+  function openVideo() {
+    if (!editor) return;
     setImageTarget(null);
+    const { selection } = editor.state;
+    if (selection instanceof NodeSelection && selection.node.type.name === "youtube") {
+      setVideoTarget({ pos: selection.from, attrs: selection.node.attrs as VideoAttrs });
+    } else {
+      setVideoTarget({ pos: null, attrs: null });
+    }
+  }
+
+  function closePanels() {
+    setImageTarget(null);
+    setVideoTarget(null);
+  }
+
+  function closeAndFocus() {
+    closePanels();
     editor?.commands.focus();
   }
 
@@ -128,8 +158,10 @@ export function BodyEditor({
             editor={editor}
             controls={id}
             imageOpen={imageTarget !== null}
+            videoOpen={videoTarget !== null}
             onImage={openImage}
-            onCloseImage={() => setImageTarget(null)}
+            onVideo={openVideo}
+            onClosePanels={closePanels}
             panel={
               imageTarget ? (
                 <ImagePanel
@@ -140,7 +172,15 @@ export function BodyEditor({
                   target={imageTarget}
                   urls={urls}
                   onUploaded={(mediaId, url) => setUrls((current) => ({ ...current, [mediaId]: url }))}
-                  onClose={closeImage}
+                  onClose={closeAndFocus}
+                />
+              ) : videoTarget ? (
+                <VideoRow
+                  key={`${videoTarget.pos ?? "new"}-${videoTarget.attrs?.id ?? ""}`}
+                  editor={editor}
+                  idPrefix={id}
+                  target={videoTarget}
+                  onClose={closeAndFocus}
                 />
               ) : null
             }
@@ -173,21 +213,26 @@ function Toolbar({
   editor,
   controls,
   imageOpen,
+  videoOpen,
   onImage,
-  onCloseImage,
+  onVideo,
+  onClosePanels,
   panel,
 }: {
   editor: Editor;
   controls: string;
   imageOpen: boolean;
+  videoOpen: boolean;
   onImage: () => void;
-  onCloseImage: () => void;
+  onVideo: () => void;
+  onClosePanels: () => void;
   panel: ReactNode;
 }) {
   const state = useEditorState({
     editor,
     selector: ({ editor: e }) => ({
       image: e.isActive("image"),
+      video: e.isActive("youtube"),
       block: e.isActive("heading", { level: 2 })
         ? "h2"
         : e.isActive("heading", { level: 3 })
@@ -214,7 +259,7 @@ function Toolbar({
   const [href, setHref] = useState("");
   const [linkText, setLinkText] = useState("");
   const [linkError, setLinkError] = useState("");
-  const linkOpen = linkTarget !== null && !imageOpen;
+  const linkOpen = linkTarget !== null && !imageOpen && !videoOpen;
 
   useEffect(() => {
     if (!linkOpen) return;
@@ -228,7 +273,7 @@ function Toolbar({
   const chain = () => editor.chain().focus();
 
   function openLink() {
-    onCloseImage();
+    onClosePanels();
     const { doc, selection, schema } = editor.state;
     let { from, to } = selection;
     let currentHref = "";
@@ -377,11 +422,22 @@ function Toolbar({
             pressed={imageOpen}
             onClick={() => {
               setLinkTarget(null);
-              if (imageOpen) onCloseImage();
+              if (imageOpen) onClosePanels();
               else onImage();
             }}
           >
             Image
+          </ToolButton>
+          <ToolButton
+            label={state.video ? "Edit video" : "YouTube video"}
+            pressed={videoOpen}
+            onClick={() => {
+              setLinkTarget(null);
+              if (videoOpen) onClosePanels();
+              else onVideo();
+            }}
+          >
+            Video
           </ToolButton>
         </span>
 

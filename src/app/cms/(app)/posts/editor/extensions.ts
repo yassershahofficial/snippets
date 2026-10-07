@@ -9,6 +9,7 @@ import StarterKit from "@tiptap/starter-kit";
 import type { CalloutVariant } from "@/lib/posts/body";
 import { CALLOUT_VARIANTS, isSafeHref } from "@/lib/posts/editor-doc";
 import { ImageView } from "./image-view";
+import { VideoView } from "./video-view";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -104,6 +105,34 @@ const Image = Node.create({
   },
 });
 
+/** YouTube videos by id. Like images, only the Video button adds them. */
+const YouTube = Node.create({
+  name: "youtube",
+  group: "block",
+  atom: true,
+  draggable: true,
+
+  addAttributes() {
+    return {
+      id: { default: null, rendered: false },
+      start: { default: 0, rendered: false },
+      caption: { default: "", rendered: false },
+    };
+  },
+
+  parseHTML() {
+    return [];
+  },
+
+  renderHTML({ node }) {
+    return ["figure", { class: "post-video", "data-youtube": node.attrs.id }];
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(VideoView);
+  },
+});
+
 const PostHeading = Heading.extend({
   renderHTML({ node, HTMLAttributes }) {
     const level = node.attrs.level === 3 ? 3 : 2;
@@ -147,6 +176,7 @@ export function postEditorExtensions(placeholder: string) {
     ListItem.extend({ content: "paragraph (bulletList | orderedList)*" }),
     Callout,
     Image,
+    YouTube,
     Placeholder.configure({ placeholder }),
   ];
 }
