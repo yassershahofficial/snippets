@@ -24,7 +24,13 @@ function groupByYear(entries: ArchiveEntry[]): YearGroup[] {
   return groups;
 }
 
-export function ArchiveFilter({ entries }: { entries: ArchiveEntry[] }) {
+type Props = {
+  entries: ArchiveEntry[];
+  /** Year headings (archive). Off for a flat author list. */
+  groupYears?: boolean;
+};
+
+export function ArchiveFilter({ entries, groupYears = true }: Props) {
   const inputId = useId();
   const [query, setQuery] = useState("");
 
@@ -36,7 +42,10 @@ export function ArchiveFilter({ entries }: { entries: ArchiveEntry[] }) {
           const text = `${entry.title} ${entry.description}`.toLowerCase();
           return words.every((word) => text.includes(word));
         });
-  const groups = groupByYear(matches);
+
+  const groups: YearGroup[] = groupYears
+    ? groupByYear(matches)
+    : [{ year: null, entries: matches }];
 
   const count =
     words.length === 0
@@ -62,18 +71,38 @@ export function ArchiveFilter({ entries }: { entries: ArchiveEntry[] }) {
         </p>
       </div>
 
-      {groups.length > 0 ? (
+      {matches.length > 0 ? (
         groups.map((group) => (
-          <section key={group.year ?? "undated"} className="archive-year" aria-labelledby={`year-${group.year ?? "undated"}`}>
-            <h2 id={`year-${group.year ?? "undated"}`} className="archive-year-title">
-              {group.year ?? "Undated"}
-            </h2>
+          <section
+            key={groupYears ? (group.year ?? "undated") : "all"}
+            className={groupYears ? "archive-year" : "archive-flat"}
+            aria-labelledby={
+              groupYears ? `year-${group.year ?? "undated"}` : undefined
+            }
+          >
+            {groupYears ? (
+              <h2
+                id={`year-${group.year ?? "undated"}`}
+                className="archive-year-title"
+              >
+                {group.year ?? "Undated"}
+              </h2>
+            ) : null}
             <ul className="archive-list">
               {group.entries.map((entry) => (
                 <li key={entry.id}>
                   <Link href={entry.href} className="archive-item">
-                    <span className="archive-item-title">{entry.title}</span>
-                    {entry.date ? <span className="archive-item-date">{entry.date}</span> : null}
+                    <span className="archive-item-main">
+                      <span className="archive-item-title">{entry.title}</span>
+                      {entry.description ? (
+                        <span className="archive-item-desc">
+                          {entry.description}
+                        </span>
+                      ) : null}
+                    </span>
+                    {entry.date ? (
+                      <span className="archive-item-date">{entry.date}</span>
+                    ) : null}
                   </Link>
                 </li>
               ))}
@@ -83,7 +112,11 @@ export function ArchiveFilter({ entries }: { entries: ArchiveEntry[] }) {
       ) : (
         <p className="archive-empty">
           No posts match &ldquo;{query.trim()}&rdquo;.{" "}
-          <button type="button" className="archive-clear" onClick={() => setQuery("")}>
+          <button
+            type="button"
+            className="archive-clear"
+            onClick={() => setQuery("")}
+          >
             Clear filter
           </button>
         </p>

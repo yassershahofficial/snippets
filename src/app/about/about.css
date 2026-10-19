@@ -1,11 +1,28 @@
+/* Author-page mock: site chrome + profile + filtered article rows. */
+
 .about {
-  max-width: 40rem;
+  --ink: #0d0d12;
+  --mute: #535353;
+  --meta: #686868;
+  --rule: #909090;
+  --rule-soft: #c4c4c4;
+  --paper: #f8f8f8;
+
+  box-sizing: border-box;
+  width: min(100%, 72rem);
   margin: 0 auto;
-  padding: 4rem 1.25rem;
-  font-family: var(--font-body-sans), system-ui, sans-serif;
-  color: #0d0d12;
-  background: #f8f8f8;
   min-height: 100%;
+  padding: 1.5rem max(1.15rem, env(safe-area-inset-left))
+    max(2.75rem, env(safe-area-inset-bottom)) max(1.15rem, env(safe-area-inset-right));
+  font-family: var(--font-body-sans), system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.about *,
+.about *::before,
+.about *::after {
+  box-sizing: border-box;
 }
 
 .about a {
@@ -13,32 +30,112 @@
   text-decoration: none;
 }
 
-.about a:hover {
-  opacity: 0.75;
+.about a:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.about-site-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--rule);
 }
 
 .about-logo {
   margin: 0;
   font-family: var(--font-logo), Georgia, serif;
-  font-size: 2rem;
-}
-
-.about h1 {
-  font-size: 1.75rem;
-  margin: 2rem 0 0;
+  font-size: clamp(2rem, 4vw, 2.625rem);
   font-weight: 400;
-  font-family: var(--font-intro-headline), Georgia, serif;
+  line-height: 1;
 }
 
-.about p {
-  line-height: 1.6;
+.about-logo a:hover {
+  opacity: 0.78;
+}
+
+.about a.about-nav-about {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  margin-top: -0.5rem;
+  margin-bottom: -0.5rem;
+  padding: 0.5rem 0;
+  font-family: var(--font-nav), system-ui, sans-serif;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  color: var(--mute);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.28em;
+  text-decoration-color: color-mix(in srgb, var(--mute) 55%, transparent);
+}
+
+.about a.about-nav-about:hover,
+.about a.about-nav-about[aria-current="page"] {
+  color: var(--ink);
+  text-decoration-color: var(--ink);
+}
+
+.about-profile {
+  margin: 2.75rem auto 0;
+  max-width: 28rem;
+  text-align: center;
+}
+
+.about-avatar {
+  display: block;
+  margin: 0 auto;
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e4e4e4;
+}
+
+.about-name {
+  margin: 1.15rem 0 0;
+  font-family: var(--font-intro-headline), Georgia, serif;
+  font-size: clamp(1.65rem, 3.5vw, 2.1rem);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.about-bio {
+  margin: 0.85rem 0 0;
+  font-size: 1.05rem;
+  line-height: 1.55;
   color: #3e3e3e;
 }
 
-.about-back {
-  margin-top: 2rem;
+.about-articles {
+  width: min(100%, 42rem);
+  margin: 2.75rem auto 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule-soft);
 }
 
-.about-back a {
-  color: #0d0d12;
+/* Nested archive styles for the shared filter; strip outer archive chrome. */
+.about-articles-filter.archive {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  background: transparent;
+}
+
+.about-articles-filter .archive-search {
+  margin-top: 0;
+}
+
+.about-articles-filter .archive-flat {
+  margin-top: 1.75rem;
+}
+
+.about-empty {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--mute);
 }

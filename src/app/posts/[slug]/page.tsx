@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AuthorByline } from "@/components/author-byline";
 import { parsePostBody } from "@/lib/posts/parse-body";
 import { getNextPost, getPublishedPostBySlug } from "@/lib/posts/queries";
 import { PostBodyView } from "@/lib/posts/render";
@@ -66,7 +67,10 @@ export default async function PostPage({ params }: Props) {
               {post.title}
             </h1>
             <p className="post-description">{post.description}</p>
-            {published ? <p className="post-meta">{published}</p> : null}
+            <div className="post-meta-row">
+              {published ? <p className="post-meta">{published}</p> : <span />}
+              <AuthorByline author={post.author} />
+            </div>
           </header>
 
           {showToc ? <PostToc entries={toc} /> : null}

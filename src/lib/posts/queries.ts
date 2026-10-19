@@ -1,23 +1,46 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
+import { mapPublicAuthor, type PublicAuthor } from "./author";
 
 export type PostRow = Database["snippets"]["Tables"]["posts"]["Row"];
 
 export type PostListItem = Pick<
   PostRow,
   "id" | "slug" | "title" | "description" | "published_at" | "featured"
->;
+> & {
+  author: PublicAuthor | null;
+};
+
+export type PublishedPost = PostRow & {
+  author: PublicAuthor | null;
+};
 
 const LIST_COLUMNS =
-  "id, slug, title, description, published_at, featured" as const;
+  "id, slug, title, description, published_at, featured, author:profiles!posts_author_id_fkey(username, avatar_url)" as const;
+
+const DETAIL_COLUMNS =
+  "*, author:profiles!posts_author_id_fkey(username, avatar_url)" as const;
+
+type ListRow = Omit<PostListItem, "author"> & { author: unknown };
+type DetailRow = PostRow & { author: unknown };
+
+function mapListItem(row: ListRow): PostListItem {
+  const { author, ...post } = row;
+  return { ...post, author: mapPublicAuthor(author) };
+}
+
+function mapDetail(row: DetailRow): PublishedPost {
+  const { author, ...post } = row;
+  return { ...post, author: mapPublicAuthor(author) };
+}
 
 export async function getPublishedPostBySlug(
   slug: string,
-): Promise<PostRow | null> {
+): Promise<PublishedPost | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("posts")
-    .select("*")
+    .select(DETAIL_COLUMNS)
     .eq("slug", slug)
     .eq("status", "published")
     .maybeSingle();
@@ -27,7 +50,7 @@ export async function getPublishedPostBySlug(
     return null;
   }
 
-  return data;
+  return data ? mapDetail(data as DetailRow) : null;
 }
 
 /** Every published post for the archive, newest first. */
@@ -45,7 +68,40 @@ export async function listPublishedPosts(): Promise<PostListItem[]> {
     return [];
   }
 
-  return data ?? [];
+  return (data as ListRow[] | null)?.map(mapListItem) ?? [];
+}
+
+/** Published posts by public username, newest first (About / future author page). */
+export async function listPublishedPostsByUsername(
+  username: string,
+): Promise<PostListItem[]> {
+  const supabase = await createClient();
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("listPublishedPostsByUsername profile", profileError.message);
+    return [];
+  }
+  if (!profile) return [];
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select(LIST_COLUMNS)
+    .eq("status", "published")
+    .eq("author_id", profile.id)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(1000);
+
+  if (error) {
+    console.error("listPublishedPostsByUsername", error.message);
+    return [];
+  }
+
+  return (data as ListRow[] | null)?.map(mapListItem) ?? [];
 }
 
 /** Published slugs for the sitemap, most recently updated first. */
@@ -69,7 +125,9 @@ export async function listSitemapPosts(): Promise<
 }
 
 /** The post the author picked as "read next", if it is published. */
-export async function getNextPost(post: PostRow): Promise<PostListItem | null> {
+export async function getNextPost(
+  post: Pick<PostRow, "id" | "next_post_id">,
+): Promise<PostListItem | null> {
   if (!post.next_post_id || post.next_post_id === post.id) return null;
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -84,7 +142,7 @@ export async function getNextPost(post: PostRow): Promise<PostListItem | null> {
     return null;
   }
 
-  return data;
+  return data ? mapListItem(data as ListRow) : null;
 }
 
 /** Featured published post, or newest published if none marked featured. */
@@ -104,7 +162,7 @@ export async function getFeaturedPost(): Promise<PostListItem | null> {
     console.error("getFeaturedPost", featured.error.message);
     return null;
   }
-  if (featured.data) return featured.data;
+  if (featured.data) return mapListItem(featured.data as ListRow);
 
   const newest = await supabase
     .from("posts")
@@ -119,7 +177,7 @@ export async function getFeaturedPost(): Promise<PostListItem | null> {
     return null;
   }
 
-  return newest.data;
+  return newest.data ? mapListItem(newest.data as ListRow) : null;
 }
 
 /** Latest published posts for the home rail, excluding the featured post. */
@@ -146,5 +204,5 @@ export async function getLatestPosts(
     return [];
   }
 
-  return data ?? [];
+  return (data as ListRow[] | null)?.map(mapListItem) ?? [];
 }

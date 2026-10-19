@@ -1,0 +1,21 @@
+.author-byline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-family: var(--font-body-sans), system-ui, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  color: #6a6a6a;
+}
+
+.author-byline-avatar {
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e4e4e4;
+}
+
+.author-byline-name {
+  min-width: 0;
+}

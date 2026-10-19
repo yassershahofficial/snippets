@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuthorByline } from "@/components/author-byline";
 import { formatPostMeta, postHref } from "@/lib/posts/format";
 import { getFeaturedPost, getLatestPosts } from "@/lib/posts/queries";
 import { homeFontVariables } from "./fonts";
@@ -47,13 +48,14 @@ export default async function HomePage() {
                 <p className="home-meta">
                   {formatPostMeta(featured.published_at)}
                 </p>
-                <Link
-                  className="home-readmore"
-                  href={postHref(featured.slug)}
-                >
-                  Read more →
-                </Link>
+                <AuthorByline author={featured.author} />
               </div>
+              <Link
+                className="home-readmore"
+                href={postHref(featured.slug)}
+              >
+                Read more →
+              </Link>
             </>
           ) : (
             <p className="home-empty">No published posts yet.</p>

@@ -18,28 +18,37 @@ export default async function ArchivePage() {
     title: post.title,
     description: post.description ?? "",
     date: formatPostMeta(post.published_at),
-    year: post.published_at ? new Date(post.published_at).getUTCFullYear() : null,
+    year: post.published_at
+      ? new Date(post.published_at).getUTCFullYear()
+      : null,
   }));
 
   return (
-    <main className="archive">
-      <p className="archive-logo">
-        <Link href="/">Snippets</Link>
-      </p>
-
-      <header className="archive-header">
-        <h1 className="archive-title">All posts</h1>
+    <div className="archive">
+      <header className="archive-site-header">
+        <p className="archive-logo">
+          <Link href="/">Snippets</Link>
+        </p>
+        <Link className="archive-nav-about" href="/about">
+          About
+        </Link>
       </header>
 
-      {entries.length > 0 ? (
-        <ArchiveFilter entries={entries} />
-      ) : (
-        <p className="archive-empty">No published posts yet.</p>
-      )}
+      <div className="archive-body">
+        <header className="archive-header">
+          <h1 className="archive-title">All posts</h1>
+        </header>
 
-      <p className="archive-back">
-        <Link href="/">← Back home</Link>
-      </p>
-    </main>
+        {entries.length > 0 ? (
+          <ArchiveFilter entries={entries} />
+        ) : (
+          <p className="archive-empty">No published posts yet.</p>
+        )}
+
+        <p className="archive-back">
+          <Link href="/">← Back home</Link>
+        </p>
+      </div>
+    </div>
   );
 }
