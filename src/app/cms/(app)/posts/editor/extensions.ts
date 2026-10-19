@@ -2,14 +2,26 @@ import { mergeAttributes, Node } from "@tiptap/core";
 import { Blockquote } from "@tiptap/extension-blockquote";
 import { Heading } from "@tiptap/extension-heading";
 import { Link } from "@tiptap/extension-link";
-import { ListItem } from "@tiptap/extension-list";
+import { BulletList, ListItem, OrderedList } from "@tiptap/extension-list";
 import { Placeholder } from "@tiptap/extensions";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import type { CalloutVariant } from "@/lib/posts/body";
-import { CALLOUT_VARIANTS, isSafeHref } from "@/lib/posts/editor-doc";
+import { CALLOUT_VARIANTS, isListPreset, isSafeHref } from "@/lib/posts/editor-doc";
 import { ImageView } from "./image-view";
 import { VideoView } from "./video-view";
+
+const listPresetAttribute = {
+  preset: {
+    default: null as string | null,
+    parseHTML: (el: HTMLElement) => {
+      const value = el.getAttribute("data-preset");
+      return isListPreset(value) ? value : null;
+    },
+    renderHTML: (attrs: Record<string, unknown>) =>
+      isListPreset(attrs.preset) ? { "data-preset": attrs.preset } : {},
+  },
+};
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -160,9 +172,9 @@ export function postEditorExtensions(placeholder: string) {
       heading: false,
       blockquote: false,
       listItem: false,
+      bulletList: false,
+      orderedList: false,
       paragraph: { HTMLAttributes: { class: "post-p" } },
-      bulletList: { HTMLAttributes: { class: "post-ul" } },
-      orderedList: { HTMLAttributes: { class: "post-ol" } },
       codeBlock: { HTMLAttributes: { class: "post-code" } },
       code: { HTMLAttributes: { class: "post-inline-code" } },
       horizontalRule: { HTMLAttributes: { class: "post-hr" } },
@@ -173,7 +185,33 @@ export function postEditorExtensions(placeholder: string) {
     Blockquote.extend({ content: "paragraph+" }).configure({
       HTMLAttributes: { class: "post-quote" },
     }),
-    ListItem.extend({ content: "paragraph (bulletList | orderedList)*" }),
+    BulletList.extend({
+      addAttributes() {
+        return { ...this.parent?.(), ...listPresetAttribute };
+      },
+    }).configure({ HTMLAttributes: { class: "post-ul" } }),
+    OrderedList.extend({
+      addAttributes() {
+        return { ...this.parent?.(), ...listPresetAttribute };
+      },
+    }).configure({ HTMLAttributes: { class: "post-ol" } }),
+    ListItem.extend({
+      content: "paragraph (bulletList | orderedList)*",
+      addKeyboardShortcuts() {
+        return {
+          Enter: () => this.editor.commands.splitListItem(this.name),
+          Tab: () => {
+            if (this.editor.commands.sinkListItem(this.name)) return true;
+            // Keep focus in the editor instead of jumping to the next form control.
+            return this.editor.isActive(this.name);
+          },
+          "Shift-Tab": () => {
+            if (this.editor.commands.liftListItem(this.name)) return true;
+            return this.editor.isActive(this.name);
+          },
+        };
+      },
+    }),
     Callout,
     Image,
     YouTube,

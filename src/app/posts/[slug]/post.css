@@ -158,6 +158,99 @@
   margin: 0.4rem 0 0;
 }
 
+/* Multilevel presets: markers follow nest depth under the root list. */
+
+.post-ol[data-preset="outline"] {
+  list-style: decimal;
+}
+
+.post-ol[data-preset="outline"] .post-ol {
+  list-style: lower-alpha;
+}
+
+.post-ol[data-preset="outline"] .post-ol .post-ol {
+  list-style: lower-roman;
+}
+
+.post-ol[data-preset="outline"] .post-ol .post-ol .post-ol {
+  list-style: decimal;
+}
+
+.post-ol[data-preset="paren"],
+.post-ol[data-preset="paren"] .post-ol {
+  list-style: none;
+  padding-left: 1.6rem;
+}
+
+.post-ol[data-preset="paren"] {
+  counter-reset: post-paren-1;
+}
+
+.post-ol[data-preset="paren"] > li {
+  counter-increment: post-paren-1;
+}
+
+.post-ol[data-preset="paren"] > li::marker {
+  content: counter(post-paren-1) ") ";
+}
+
+.post-ol[data-preset="paren"] .post-ol {
+  counter-reset: post-paren-2;
+}
+
+.post-ol[data-preset="paren"] .post-ol > li {
+  counter-increment: post-paren-2;
+}
+
+.post-ol[data-preset="paren"] .post-ol > li::marker {
+  content: counter(post-paren-2, lower-alpha) ") ";
+}
+
+.post-ol[data-preset="paren"] .post-ol .post-ol {
+  counter-reset: post-paren-3;
+}
+
+.post-ol[data-preset="paren"] .post-ol .post-ol > li {
+  counter-increment: post-paren-3;
+}
+
+.post-ol[data-preset="paren"] .post-ol .post-ol > li::marker {
+  content: counter(post-paren-3, lower-roman) ") ";
+}
+
+.post-ol[data-preset="legal"],
+.post-ol[data-preset="legal"] .post-ol {
+  list-style: none;
+  padding-left: 1.6rem;
+  counter-reset: post-legal;
+}
+
+.post-ol[data-preset="legal"] > li,
+.post-ol[data-preset="legal"] .post-ol > li {
+  counter-increment: post-legal;
+}
+
+.post-ol[data-preset="legal"] > li::marker,
+.post-ol[data-preset="legal"] .post-ol > li::marker {
+  content: counters(post-legal, ".") ". ";
+}
+
+.post-ul[data-preset="bullets"] {
+  list-style: disc;
+}
+
+.post-ul[data-preset="bullets"] .post-ul {
+  list-style: circle;
+}
+
+.post-ul[data-preset="bullets"] .post-ul .post-ul {
+  list-style: square;
+}
+
+.post-ul[data-preset="bullets"] .post-ul .post-ul .post-ul {
+  list-style: disc;
+}
+
 .post-figure {
   margin: 1.75rem auto;
 }

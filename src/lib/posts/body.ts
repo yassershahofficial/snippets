@@ -60,13 +60,22 @@ export type ListItemNode = {
   content?: (ParagraphNode | BulletListNode | OrderedListNode)[];
 };
 
+/** Marker scheme for nested lists. Stored on the outermost list; CSS styles depths. */
+export type ListPreset = "outline" | "legal" | "bullets" | "paren";
+
+export type ListAttrs = {
+  preset?: ListPreset;
+};
+
 export type BulletListNode = {
   type: "bullet_list";
+  attrs?: ListAttrs;
   content?: ListItemNode[];
 };
 
 export type OrderedListNode = {
   type: "ordered_list";
+  attrs?: ListAttrs;
   content?: ListItemNode[];
 };
 

@@ -162,9 +162,13 @@ function renderListItem(node: ListItemNode, key: string): ReactNode {
   );
 }
 
+function listPresetProps(preset: string | undefined): { "data-preset"?: string } {
+  return preset ? { "data-preset": preset } : {};
+}
+
 function renderBulletList(node: BulletListNode, key: string): ReactNode {
   return (
-    <ul key={key} className="post-ul">
+    <ul key={key} className="post-ul" {...listPresetProps(node.attrs?.preset)}>
       {node.content?.map((item, i) => renderListItem(item, `${key}-li${i}`))}
     </ul>
   );
@@ -172,7 +176,7 @@ function renderBulletList(node: BulletListNode, key: string): ReactNode {
 
 function renderOrderedList(node: OrderedListNode, key: string): ReactNode {
   return (
-    <ol key={key} className="post-ol">
+    <ol key={key} className="post-ol" {...listPresetProps(node.attrs?.preset)}>
       {node.content?.map((item, i) => renderListItem(item, `${key}-li${i}`))}
     </ol>
   );

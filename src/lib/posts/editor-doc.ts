@@ -8,6 +8,7 @@ import type {
   ImageRatio,
   ImageSize,
   ListItemNode,
+  ListPreset,
   Mark,
   OrderedListNode,
   ParagraphNode,
@@ -43,6 +44,12 @@ export const BODY_LIMITS = {
 } as const;
 
 export const CALLOUT_VARIANTS: CalloutVariant[] = ["info", "tip", "warning", "danger"];
+
+export const LIST_PRESETS: ListPreset[] = ["outline", "legal", "bullets", "paren"];
+
+export function isListPreset(value: unknown): value is ListPreset {
+  return typeof value === "string" && LIST_PRESETS.includes(value as ListPreset);
+}
 
 const SIMPLE_MARKS = new Set(["bold", "italic", "underline", "strike", "code"]);
 
@@ -85,6 +92,11 @@ function paragraphsToEditor(paragraphs: ParagraphNode[] | undefined): EditorNode
   return nodes.length ? nodes : [{ type: "paragraph" }];
 }
 
+function listAttrsToEditor(list: BulletListNode | OrderedListNode): EditorNode["attrs"] | undefined {
+  const preset = list.attrs?.preset;
+  return preset ? { preset } : undefined;
+}
+
 function listToEditor(list: BulletListNode | OrderedListNode): EditorNode {
   const items = (list.content ?? []).map((item) => {
     const children: EditorNode[] = [];
@@ -95,10 +107,11 @@ function listToEditor(list: BulletListNode | OrderedListNode): EditorNode {
     if (children[0]?.type !== "paragraph") children.unshift({ type: "paragraph" });
     return { type: "listItem", content: children };
   });
-  return {
-    type: list.type === "bullet_list" ? "bulletList" : "orderedList",
-    content: items.length ? items : [{ type: "listItem", content: [{ type: "paragraph" }] }],
-  };
+  return withContent(
+    list.type === "bullet_list" ? "bulletList" : "orderedList",
+    items.length ? items : [{ type: "listItem", content: [{ type: "paragraph" }] }],
+    listAttrsToEditor(list),
+  );
 }
 
 function blockToEditor(block: Block): EditorNode | null {
@@ -220,8 +233,16 @@ function readParagraphs(node: Record<string, unknown>, ctx: Context, where: stri
   );
 }
 
+function readListPreset(node: Record<string, unknown>): ListPreset | undefined {
+  const attrs = isRecord(node.attrs) ? node.attrs : {};
+  if (attrs.preset == null || attrs.preset === "") return undefined;
+  if (!isListPreset(attrs.preset)) reject("A list has an unknown style.");
+  return attrs.preset;
+}
+
 function readList(node: Record<string, unknown>, ctx: Context, depth: number): BulletListNode | OrderedListNode {
   if (depth > BODY_LIMITS.listDepth) reject(`Lists can be nested at most ${BODY_LIMITS.listDepth} levels deep.`);
+  const preset = readListPreset(node);
   const items: ListItemNode[] = childrenOf(node, ctx).map((item) => {
     if (item.type !== "listItem") reject("The body contains a malformed list.");
     const content = childrenOf(item, ctx).map((child) => {
@@ -231,9 +252,10 @@ function readList(node: Record<string, unknown>, ctx: Context, depth: number): B
     });
     return { type: "list_item", content };
   });
+  const attrs = preset ? { preset } : undefined;
   return node.type === "bulletList"
-    ? { type: "bullet_list", content: items }
-    : { type: "ordered_list", content: items };
+    ? { type: "bullet_list", ...(attrs ? { attrs } : {}), content: items }
+    : { type: "ordered_list", ...(attrs ? { attrs } : {}), content: items };
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

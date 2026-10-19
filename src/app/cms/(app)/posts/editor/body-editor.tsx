@@ -5,10 +5,17 @@ import { getMarkRange } from "@tiptap/core";
 import { NodeSelection } from "@tiptap/pm/state";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import type { CalloutVariant } from "@/lib/posts/body";
+import type { CalloutVariant, ListPreset } from "@/lib/posts/body";
 import { CALLOUT_VARIANTS, isSafeHref } from "@/lib/posts/editor-doc";
 import { postEditorExtensions } from "./extensions";
 import { ImagePanel, type ImageAttrs, type ImageTarget } from "./image-panel";
+import {
+  applyListPreset,
+  clearListPreset,
+  currentListPreset,
+  LIST_PRESET_LABELS,
+  LIST_PRESETS,
+} from "./list-preset";
 import { MediaContext } from "./media-context";
 import { VideoRow, type VideoAttrs, type VideoTarget } from "./video-row";
 
@@ -246,6 +253,9 @@ function Toolbar({
       link: e.isActive("link"),
       bulletList: e.isActive("bulletList"),
       orderedList: e.isActive("orderedList"),
+      listPreset: currentListPreset(e),
+      canSinkList: e.can().sinkListItem("listItem"),
+      canLiftList: e.can().liftListItem("listItem"),
       blockquote: e.isActive("blockquote"),
       codeBlock: e.isActive("codeBlock"),
       callout: e.isActive("callout"),
@@ -384,11 +394,57 @@ function Toolbar({
         </span>
 
         <span className="cms-toolbar-group">
-          <ToolButton label="Bulleted list" pressed={state.bulletList} onClick={() => chain().toggleBulletList().run()}>
+          <ToolButton
+            label="Bulleted list"
+            pressed={state.bulletList}
+            onClick={() => {
+              chain().toggleBulletList().run();
+              clearListPreset(editor);
+            }}
+          >
             • List
           </ToolButton>
-          <ToolButton label="Numbered list" pressed={state.orderedList} onClick={() => chain().toggleOrderedList().run()}>
+          <ToolButton
+            label="Numbered list"
+            pressed={state.orderedList}
+            onClick={() => {
+              chain().toggleOrderedList().run();
+              clearListPreset(editor);
+            }}
+          >
             1. List
+          </ToolButton>
+          <select
+            aria-label="Multilevel list"
+            title="Multilevel list"
+            value={state.listPreset}
+            onChange={(event) => {
+              const value = event.target.value;
+              applyListPreset(editor, value ? (value as ListPreset) : null);
+            }}
+          >
+            <option value="">List style</option>
+            {LIST_PRESETS.map((preset) => (
+              <option key={preset} value={preset}>
+                {LIST_PRESET_LABELS[preset]}
+              </option>
+            ))}
+          </select>
+          <ToolButton
+            label="Decrease indent"
+            shortcut="Shift+Tab"
+            disabled={!state.canLiftList}
+            onClick={() => chain().liftListItem("listItem").run()}
+          >
+            Outdent
+          </ToolButton>
+          <ToolButton
+            label="Increase indent"
+            shortcut="Tab"
+            disabled={!state.canSinkList}
+            onClick={() => chain().sinkListItem("listItem").run()}
+          >
+            Indent
           </ToolButton>
           <ToolButton label="Quote" pressed={state.blockquote} onClick={() => chain().toggleBlockquote().run()}>
             Quote
