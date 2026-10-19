@@ -52,6 +52,14 @@
   line-height: 1;
 }
 
+.home-logo a {
+  text-decoration: none;
+}
+
+.home-logo a:hover {
+  opacity: 0.78;
+}
+
 /* Nav link: mute + hairline underline so it reads as actionable */
 .home a.home-about {
   display: inline-flex;

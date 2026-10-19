@@ -12,7 +12,9 @@ export default async function HomePage() {
   return (
     <div className={`home ${homeFontVariables}`}>
       <header className="home-header">
-        <p className="home-logo">Snippets</p>
+        <p className="home-logo">
+          <Link href="/">Snippets</Link>
+        </p>
         <Link className="home-about" href="/about">
           About
         </Link>

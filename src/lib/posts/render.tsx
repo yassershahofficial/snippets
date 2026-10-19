@@ -20,6 +20,7 @@ import type {
   TitleNode,
   YouTubeNode,
 } from "@/lib/posts/body";
+import { inlinePlainText } from "@/lib/posts/toc";
 import { youtubeEmbedUrl, YOUTUBE_ID } from "@/lib/posts/youtube";
 
 type RenderOptions = {
@@ -118,13 +119,14 @@ function renderDescription(node: DescriptionNode, key: string): ReactNode {
   );
 }
 
-function renderHeading(node: HeadingNode, key: string): ReactNode {
+function renderHeading(node: HeadingNode, key: string, id?: string): ReactNode {
   const level = node.attrs.level;
   const className = `post-h post-h${level}`;
   const children = renderInline(node.content, key);
-  if (level === 1) return <h1 key={key} className={className}>{children}</h1>;
-  if (level === 2) return <h2 key={key} className={className}>{children}</h2>;
-  return <h3 key={key} className={className}>{children}</h3>;
+  const props = id ? { id, className } : { className };
+  if (level === 1) return <h1 key={key} {...props}>{children}</h1>;
+  if (level === 2) return <h2 key={key} {...props}>{children}</h2>;
+  return <h3 key={key} {...props}>{children}</h3>;
 }
 
 function renderBlockquote(node: BlockquoteNode, key: string): ReactNode {
@@ -224,14 +226,26 @@ function renderCallout(node: CalloutNode, key: string): ReactNode {
   );
 }
 
-function renderBlock(block: Block, key: string, options: RenderOptions): ReactNode {
+function renderBlock(
+  block: Block,
+  key: string,
+  options: RenderOptions,
+  headingIds: string[],
+  headingIndex: { current: number },
+): ReactNode {
   switch (block.type) {
     case "title":
       return options.skipTitleDescription ? null : renderTitle(block, key);
     case "description":
       return options.skipTitleDescription ? null : renderDescription(block, key);
-    case "heading":
-      return renderHeading(block, key);
+    case "heading": {
+      let id: string | undefined;
+      if (inlinePlainText(block.content)) {
+        id = headingIds[headingIndex.current];
+        headingIndex.current += 1;
+      }
+      return renderHeading(block, key, id);
+    }
     case "paragraph":
       return renderParagraph(block, key);
     case "blockquote":
@@ -259,17 +273,21 @@ export function PostBodyView({
   body,
   skipTitleDescription = true,
   mediaUrls,
+  headingIds = [],
 }: {
   body: PostBody;
   skipTitleDescription?: boolean;
   /** Signed URLs for private images (CMS preview and review). Public copies are used otherwise. */
   mediaUrls?: Record<string, string>;
+  /** Anchor ids for body headings, in document order. */
+  headingIds?: string[];
 }) {
   const mediaUrl = mediaUrls ? (id: string) => mediaUrls[id] ?? null : undefined;
+  const headingIndex = { current: 0 };
   return (
     <div className="post-body">
       {body.content.map((block, i) =>
-        renderBlock(block, `b${i}`, { skipTitleDescription, mediaUrl }),
+        renderBlock(block, `b${i}`, { skipTitleDescription, mediaUrl }, headingIds, headingIndex),
       )}
     </div>
   );
